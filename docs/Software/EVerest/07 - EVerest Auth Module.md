@@ -2,7 +2,7 @@
 
 Tags: #dcfc #everest #software #auth #rfid #pnc #ocpp #security
 
-Related: [[03 - EVerest OCPP201 Backend Integration]] | [[10 - EVerest EvseManager]] | [[11 - ISO 15118 Vehicle Communication]] | [[09 - EVerest Energy Manager]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
+Related: [[03 - EVerest OCPP201 Backend Integration]] | [[06 - EVerest EvseManager]] | [[05 - ISO 15118 Vehicle Communication]] | [[05 - EVerest Energy Manager]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
 
 ## 1. Overview
 
@@ -356,7 +356,7 @@ Best for: multi-connector stations with a touchscreen HMI.
 ```
 
 > [!note] PnC configuration
-> PnC requires `ISO15118Ctrlr.PnCEnabled=true` and `V2GCertificateInstallationEnabled=true` in the OCPP device model. See [[03 - EVerest OCPP201 Backend Integration#9. ISO 15118 Plug and Charge Integration]] and [[11 - ISO 15118 Vehicle Communication]] for the full certificate chain.
+> PnC requires `ISO15118Ctrlr.PnCEnabled=true` and `V2GCertificateInstallationEnabled=true` in the OCPP device model. See [[03 - EVerest OCPP201 Backend Integration#9. ISO 15118 Plug and Charge Integration]] and [[05 - ISO 15118 Vehicle Communication]] for the full certificate chain.
 
 ### 5.3 CSMS Remote Start
 
@@ -907,9 +907,9 @@ These are managed by the CSMS via `SetVariables` / `GetVariables` and synced to 
 ## 15. Related Documentation
 
 - [[03 - EVerest OCPP201 Backend Integration]] — Auth validator/provider interfaces, offline behavior, security profiles
-- [[10 - EVerest EvseManager]] — `authorize_response` command, session event types, authorization timeout
-- [[11 - ISO 15118 Vehicle Communication]] — Plug and Charge certificate chain, EMAID tokens
-- [[09 - EVerest Energy Manager]] — Session lifecycle interaction (authorization precedes energy allocation)
+- [[06 - EVerest EvseManager]] — `authorize_response` command, session event types, authorization timeout
+- [[05 - ISO 15118 Vehicle Communication]] — Plug and Charge certificate chain, EMAID tokens
+- [[05 - EVerest Energy Manager]] — Session lifecycle interaction (authorization precedes energy allocation)
 - [[01 - Software Framework]] — EVerest module architecture, MQTT IPC
 - [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]] — Interface contracts, YAML wiring patterns
 - [[docs/System/03 - Standards Compliance|03 - Standards Compliance]] — OCPP certification, ISO 15118 compliance

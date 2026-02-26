@@ -2,7 +2,7 @@
 
 Tags: #dcfc #everest #ocpp #software #backend #csms #security
 
-Related: [[01 - EVerest Safety Supervisor Integration]] | [[06 - EVerest Power Module Driver]] | [[01 - Software Framework]] | [[02 - Communication Protocols]] | [[docs/System/03 - Standards Compliance|03 - Standards Compliance]]
+Related: [[01 - EVerest Safety Supervisor Integration]] | [[02 - EVerest Power Module Driver]] | [[01 - Software Framework]] | [[02 - Communication Protocols]] | [[docs/System/03 - Standards Compliance|03 - Standards Compliance]]
 
 ---
 
@@ -546,7 +546,7 @@ OCPP201:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                          CM5 (Linux + EVerest)                            │
+│                          Phytec SBC (Linux + EVerest)                            │
 │                                                                          │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌──────────────────┐   │
 │  │  OCPP201   │  │    Auth    │  │  EvsSec    │  │    System        │   │
@@ -618,7 +618,7 @@ When the CSMS sends a `SetChargingProfile` limiting station power:
 
 | Interface | Connection | Purpose |
 |-----------|------------|---------|
-| ETH0 (CM5) | Wired Ethernet via PoE switch | Primary CSMS connection |
+| ETH0 (Phytec SBC) | Wired Ethernet via PoE switch | Primary CSMS connection |
 | 4G/5G modem | SFP module on PoE switch | Backup CSMS connection (failover) |
 | DNS/NTP | Via ETH0 or 4G | Time sync (critical for TLS and billing) |
 
@@ -658,7 +658,7 @@ Configure two `NetworkConnectionProfiles` in `InternalCtrlr.json`:
 ## 14. Related Documentation
 
 - [[01 - EVerest Safety Supervisor Integration]] — Safety BSP module that publishes session events consumed by OCPP
-- [[06 - EVerest Power Module Driver]] — Power supply driver providing meter values and power control
+- [[02 - EVerest Power Module Driver]] — Power supply driver providing meter values and power control
 - [[01 - Software Framework]] — EVerest framework architecture and module system
 - [[02 - Communication Protocols]] — Network wiring, OCPP architecture diagrams, CAN bus topology
 - [[docs/System/03 - Standards Compliance|03 - Standards Compliance]] — OCPP standard versions and certification requirements

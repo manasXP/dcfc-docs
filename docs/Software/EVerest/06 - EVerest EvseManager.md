@@ -2,7 +2,7 @@
 
 Tags: #dcfc #everest #software #evse #session-management #state-machine #dc-charging
 
-Related: [[01 - EVerest Safety Supervisor Integration]] | [[06 - EVerest Power Module Driver]] | [[07 - EVerest OCPP201 Backend Integration]] | [[08 - EVerest HVAC Driver]] | [[09 - EVerest Energy Manager]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
+Related: [[01 - EVerest Safety Supervisor Integration]] | [[02 - EVerest Power Module Driver]] | [[03 - EVerest OCPP201 Backend Integration]] | [[04 - EVerest HVAC Driver]] | [[05 - EVerest Energy Manager]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
 
 ## 1. Overview
 
@@ -934,10 +934,10 @@ active_modules:
 ## 10. Related Documentation
 
 - [[01 - EVerest Safety Supervisor Integration]] — BSP module, CAN protocol mapping, contactor sequencing, error propagation
-- [[06 - EVerest Power Module Driver]] — `power_supply_DC` interface, current distribution, module shedding
-- [[07 - EVerest OCPP201 Backend Integration]] — OCPP session events, smart charging, authorization flow
-- [[08 - EVerest HVAC Driver]] — Thermal derating signals, pre-cooling integration
-- [[09 - EVerest Energy Manager]] — Energy tree, `enforce_limits`, site power budgeting
+- [[02 - EVerest Power Module Driver]] — `power_supply_DC` interface, current distribution, module shedding
+- [[03 - EVerest OCPP201 Backend Integration]] — OCPP session events, smart charging, authorization flow
+- [[04 - EVerest HVAC Driver]] — Thermal derating signals, pre-cooling integration
+- [[05 - EVerest Energy Manager]] — Energy tree, `enforce_limits`, site power budgeting
 - [[03 - Safety Supervisor Controller]] — Safety state machine, fault codes, watchdog
 - [[01 - Software Framework]] — EVerest microservices architecture, MQTT IPC
 - [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]] — Interface specifications, BSP patterns, DC charging sequence

@@ -64,6 +64,20 @@ In essence, EVerest is a foundational software platform that simplifies building
 7. [[docs/Hardware/07 - CCS Connector and Liquid-Cooled Cable Assembly|07 - CCS Connector and Liquid-Cooled Cable Assembly]]
 8. [[docs/Hardware/08 - Power Module Hardware Design|08 - Power Module Hardware Design]]
 
+### Components
+1. [[docs/Components/01 - Control Electronics|01 - Control Electronics]]
+2. [[docs/Components/02 - Networking and Communication|02 - Networking and Communication]]
+3. [[docs/Components/03 - User Interface|03 - User Interface]]
+4. [[docs/Components/04 - Power Modules|04 - Power Modules]]
+5. [[docs/Components/05 - DC Output Protection|05 - DC Output Protection]]
+6. [[docs/Components/06 - CCS Connector and Cable Assembly|06 - CCS Connector and Cable Assembly]]
+7. [[docs/Components/07 - AC Input and Protection|07 - AC Input and Protection]]
+8. [[docs/Components/08 - Auxiliary Power Supply|08 - Auxiliary Power Supply]]
+9. [[docs/Components/09 - Cooling System|09 - Cooling System]]
+10. [[docs/Components/10 - HVAC Clip-On Unit|10 - HVAC Clip-On Unit]]
+11. [[docs/Components/11 - Cabinet and Enclosure|11 - Cabinet and Enclosure]]
+12. [[docs/Components/12 - Total Cost Summary|12 - Total Cost Summary]]
+
 ### HVAC
 1. [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]]
 

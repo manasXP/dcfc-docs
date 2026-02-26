@@ -894,4 +894,4 @@ Session End
 
 - [[__init]] — DCFC project overview and specifications
 - [[01 - Safety Philosophy]] — safety architecture principles
-- [[02 - CM5 based Main Controller]] — SBC hardware for running EVerest
+- [[02 - Phytec SBC based Main Controller]] — SBC hardware for running EVerest

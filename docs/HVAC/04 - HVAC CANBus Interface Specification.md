@@ -8,11 +8,11 @@ Interface specification for the clip-on HVAC unit used in the [[__init|DCFC]] ca
 
 ![[HVAC-CANBus-Connection.excalidraw]]
 
-The HVAC unit is an externally mounted, closed-loop cooling system that maintains the internal cabinet temperature within safe operating limits. It communicates with the [[02 - CM5 based Main Controller|CM5 Main Controller]] over a dedicated CAN bus.
+The HVAC unit is an externally mounted, closed-loop cooling system that maintains the internal cabinet temperature within safe operating limits. It communicates with the [[02 - Phytec SBC based Main Controller|Phytec SBC Main Controller]] over a dedicated CAN bus.
 
 ```text
 ┌──────────────────────────────────────────────────────┐
-│              CM5 MAIN CONTROLLER                     │
+│              Phytec SBC MAIN CONTROLLER                     │
 │                                                      │
 │  CAN #1 ──────► DC Power Bricks (25–30 kW modules)  │
 │  CAN #2 ──────► EVSE Auxiliary Board                 │
@@ -43,8 +43,8 @@ The HVAC unit is an externally mounted, closed-loop cooling system that maintain
 | **Bus Assignment** | CAN #3 (dedicated HVAC bus) |
 | **Bitrate** | 250 kbps |
 | **Protocol** | CAN 2.0B (extended 29-bit identifiers) |
-| **Isolation** | 3 kV galvanic isolation (via isolated CAN transceiver on CM5 IO) |
-| **Termination** | 120 Ω at each end (CM5 controller + HVAC unit) |
+| **Isolation** | 3 kV galvanic isolation (via isolated CAN transceiver on Phytec SBC IO) |
+| **Termination** | 120 Ω at each end (Phytec SBC controller + HVAC unit) |
 | **Cable** | Shielded twisted pair, max 5 m |
 | **Connector** | 4-pin M12 (CAN_H, CAN_L, GND, Shield) |
 
@@ -59,7 +59,7 @@ The HVAC unit is an externally mounted, closed-loop cooling system that maintain
 
 | Node | Address | Role |
 |------|---------|------|
-| CM5 Main Controller | `0x00` | Bus master |
+| Phytec SBC Main Controller | `0x00` | Bus master |
 | HVAC Unit | `0x10` | Slave device |
 
 ### 3.2 Message ID Allocation
@@ -68,12 +68,12 @@ Base ID format: `0x18XX10YY` where `XX` = message type, `10` = HVAC node, `YY` =
 
 | Msg ID (hex) | Direction | Name | Cycle Time | DLC |
 |--------------|-----------|------|------------|-----|
-| `0x100` | HVAC → CM5 | HVAC_Status_1 | 1000 ms | 8 |
-| `0x101` | HVAC → CM5 | HVAC_Status_2 | 1000 ms | 8 |
-| `0x102` | HVAC → CM5 | HVAC_Faults | Event-driven | 8 |
-| `0x103` | HVAC → CM5 | HVAC_Diagnostics | 5000 ms | 8 |
-| `0x200` | CM5 → HVAC | HVAC_Command | 1000 ms | 8 |
-| `0x201` | CM5 → HVAC | HVAC_Config | On-demand | 8 |
+| `0x100` | HVAC → Phytec SBC | HVAC_Status_1 | 1000 ms | 8 |
+| `0x101` | HVAC → Phytec SBC | HVAC_Status_2 | 1000 ms | 8 |
+| `0x102` | HVAC → Phytec SBC | HVAC_Faults | Event-driven | 8 |
+| `0x103` | HVAC → Phytec SBC | HVAC_Diagnostics | 5000 ms | 8 |
+| `0x200` | Phytec SBC → HVAC | HVAC_Command | 1000 ms | 8 |
+| `0x201` | Phytec SBC → HVAC | HVAC_Config | On-demand | 8 |
 | `0x7FF` | Both | Heartbeat | 2000 ms | 1 |
 
 ---
@@ -120,7 +120,7 @@ Sent immediately on fault detection; repeated every 1000 ms while fault is activ
 | 4–5 | `compressor_cycles` | count | 1/bit | 0–65,535 | Total compressor start cycles |
 | 6–7 | `energy_consumed` | kWh | 0.1 kWh/bit | 0–6,553.5 | Cumulative HVAC energy consumption |
 
-#### `0x200` — HVAC_Command (CM5 → HVAC)
+#### `0x200` — HVAC_Command (Phytec SBC → HVAC)
 
 | Byte | Signal | Unit | Resolution | Range | Description |
 |------|--------|------|------------|-------|-------------|
@@ -131,7 +131,7 @@ Sent immediately on fault detection; repeated every 1000 ms while fault is activ
 | 5 | `derating_level` | enum | — | 0–3 | Charger power derating level signalled to HVAC |
 | 6–7 | Reserved | — | — | — | — |
 
-#### `0x201` — HVAC_Config (CM5 → HVAC, On-Demand)
+#### `0x201` — HVAC_Config (Phytec SBC → HVAC, On-Demand)
 
 | Byte | Signal | Unit | Resolution | Range | Description |
 |------|--------|------|------------|-------|-------------|
@@ -178,10 +178,10 @@ Sent immediately on fault detection; repeated every 1000 ms while fault is activ
 | 0x02 | Compressor locked rotor | Major | Disable compressor, require manual reset |
 | 0x03 | High-side pressure too high | Major | Disable compressor, check condenser airflow |
 | 0x04 | Low-side pressure too low | Minor | Check refrigerant charge |
-| 0x05 | Cabinet over-temperature | Critical | Signal CM5 to derate or shut down charger |
+| 0x05 | Cabinet over-temperature | Critical | Signal Phytec SBC to derate or shut down charger |
 | 0x06 | Cabinet under-temperature | Warning | Enable heating mode if available |
 | 0x07 | Condenser fan failure | Minor | Derate compressor speed |
-| 0x08 | Internal fan failure | Major | Signal CM5 to derate charger |
+| 0x08 | Internal fan failure | Major | Signal Phytec SBC to derate charger |
 | 0x09 | Temperature sensor fault | Major | Use backup/default setpoint |
 | 0x0A | Communication timeout | Critical | HVAC enters autonomous safe mode |
 | 0x0B | Refrigerant leak detected | Critical | Disable compressor, alert operator |
@@ -195,16 +195,16 @@ Sent immediately on fault detection; repeated every 1000 ms while fault is activ
 ### 5.1 Startup Sequence
 
 ```text
-1. CM5 powers on → sends Heartbeat on CAN #3
+1. Phytec SBC powers on → sends Heartbeat on CAN #3
 2. HVAC unit powers on → responds with Heartbeat
-3. CM5 sends HVAC_Config (0x201) with alarm thresholds
-4. CM5 sends HVAC_Command (0x200) with mode = STANDBY, setpoint = 35°C
+3. Phytec SBC sends HVAC_Config (0x201) with alarm thresholds
+4. Phytec SBC sends HVAC_Command (0x200) with mode = STANDBY, setpoint = 35°C
 5. HVAC begins periodic Status_1, Status_2, Diagnostics messages
 6. When charger begins a charging session:
-   a. CM5 sends mode = COOLING, setpoint = 30°C
+   a. Phytec SBC sends mode = COOLING, setpoint = 30°C
    b. HVAC starts compressor and fans
 7. When charging session ends:
-   a. CM5 sends mode = STANDBY
+   a. Phytec SBC sends mode = STANDBY
    b. HVAC ramps down compressor, maintains minimum fan speed
 ```
 
@@ -218,21 +218,21 @@ Sent immediately on fault detection; repeated every 1000 ms while fault is activ
     30–40°C    │    HVAC in COOLING mode, full compressor
                │
     40–45°C    │    HVAC sets derate_request flag (bit 5)
-               │    CM5 reduces charger output by 25%
+               │    Phytec SBC reduces charger output by 25%
                │
     45–50°C    │    HVAC sends fault 0x05 (over-temp, Critical)
-               │    CM5 reduces charger output by 50%
+               │    Phytec SBC reduces charger output by 50%
                │
     > 50°C     │    HVAC sets critical_fault flag (bit 7)
-               │    CM5 initiates orderly charger shutdown
+               │    Phytec SBC initiates orderly charger shutdown
 ```
 
 ### 5.3 Communication Loss Handling
 
 | Scenario | Detection | Action |
 |----------|-----------|--------|
-| CM5 loses HVAC heartbeat | No heartbeat for 6 s (3 missed cycles) | CM5 derates charger to 50%, logs fault, alerts via OCPP |
-| HVAC loses CM5 heartbeat | No heartbeat for 6 s | HVAC enters autonomous mode: maintains last setpoint, cooling active |
+| Phytec SBC loses HVAC heartbeat | No heartbeat for 6 s (3 missed cycles) | Phytec SBC derates charger to 50%, logs fault, alerts via OCPP |
+| HVAC loses Phytec SBC heartbeat | No heartbeat for 6 s | HVAC enters autonomous mode: maintains last setpoint, cooling active |
 | Both buses silent > 30 s | HVAC internal watchdog | HVAC maintains cooling at max, sets fault LED on unit |
 
 ---
@@ -274,17 +274,17 @@ The energy management module uses `hvac_power_draw` to factor HVAC consumption i
 
 ---
 
-## 7. Hardware Requirements for CM5 Side
+## 7. Hardware Requirements for Phytec SBC Side
 
 | Item | Requirement |
 |------|-------------|
-| CAN transceiver | Isolated CAN 2.0B transceiver on CM5 IO board (e.g., Waveshare 2-CH CAN module already in BOM) |
-| CAN channel | Use one channel from the existing Waveshare 2-CH CAN + RS485 module ($70, already specified in BOM) |
-| Software driver | SocketCAN on Linux (standard kernel driver) |
+| CAN transceiver | Native CAN FD interface on Phytec SBC (phyCORE-AM62x has 3x CAN FD on-chip) |
+| CAN channel | CAN #3 — one of the three native CAN FD interfaces on the Phytec SBC |
+| Software driver | SocketCAN on Linux (standard kernel driver, TI AM62x CAN FD support) |
 | EVerest module | Custom `hvac_controller` module (C++ or Python) |
 
 > [!tip] BOM Impact
-> No additional hardware is required. The existing [[02 - CM5 based Main Controller#Components summary|Waveshare Iso CAN + RS485 Controller]] ($70 × 2 in BOM) provides 4 total CAN channels. CAN #1 and CAN #2 use 2 channels; the HVAC interface uses a 3rd channel from the same hardware.
+> No additional hardware is required. The Phytec phyCORE-AM62x has 3x native CAN FD interfaces. CAN #1 (power modules) and CAN #2 (safety supervisor) use 2 channels; the HVAC interface uses the 3rd native CAN FD channel.
 
 ---
 

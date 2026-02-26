@@ -8,7 +8,7 @@ Related: [[01 - Hardware Components]] | [[02 - Electric Wiring Diagram]] | [[04 
 
 The DC output contactor assembly and pre-charge circuit form the critical switching interface between the power conversion modules and the EV charging connector. This assembly must safely connect and disconnect high-voltage DC (200–1000V, up to 500A) under both normal operating conditions and fault scenarios. The pre-charge circuit prevents damaging inrush current into the EV's input filter capacitors by ramping the output voltage in a controlled manner before the main contactors close.
 
-These components sit between the DC link capacitor bank (output of the power conversion stage) and the charging cable/connector. They are controlled exclusively by the Safety Supervisor Controller (STM32), not directly by the CM5 main controller.
+These components sit between the DC link capacitor bank (output of the power conversion stage) and the charging cable/connector. They are controlled exclusively by the Safety Supervisor Controller (STM32), not directly by the Phytec SBC main controller.
 
 ## 2. System Context
 
@@ -142,7 +142,7 @@ WELD DETECTION LOGIC (runs after every open command):
 On weld detection:
   - Latch fault F05 (CONTACTOR_WELD)
   - Do NOT attempt to re-close any contactor
-  - Report to CM5 → OCPP StatusNotification (faulted)
+  - Report to Phytec SBC → OCPP StatusNotification (faulted)
   - Charger is out of service until field repair
 ```
 

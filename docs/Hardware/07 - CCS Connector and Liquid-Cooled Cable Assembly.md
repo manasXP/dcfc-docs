@@ -473,13 +473,13 @@ IEC 62196-3 requires that the connector cannot be withdrawn while DC voltage is 
 ```
 1. User inserts connector → PP resistance detected (cable present)
 2. CP signal establishes → IEC 61851 state machine begins
-3. CM5 commands lock actuator → lock engages
+3. Phytec SBC commands lock actuator → lock engages
 4. Lock microswitch confirms LOCKED → reported to safety supervisor
 5. Safety supervisor allows DC contactor closure only if DI7 = LOCKED
 6. ...charging session...
 7. Session ends → current ramped to 0 → contactors open
 8. Voltage at pins < 60V confirmed (discharge resistor + power module off)
-9. CM5 commands unlock → lock disengages
+9. Phytec SBC commands unlock → lock disengages
 10. User can withdraw connector
 ```
 
@@ -803,7 +803,7 @@ For chargers with two charging outlets (power-shared), two complete cable assemb
 - CP/PP circuit
 - Lock mechanism and temperature sensors
 
-Power sharing is managed by the CM5 energy manager, which dynamically allocates available power module output between the two outlets based on demand and priority.
+Power sharing is managed by the Phytec SBC energy manager, which dynamically allocates available power module output between the two outlets based on demand and priority.
 
 ```
                             POWER MODULES

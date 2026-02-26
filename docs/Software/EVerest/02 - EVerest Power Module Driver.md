@@ -2,11 +2,11 @@
 
 Tags: #dcfc #everest #software #power-modules #can #cpp
 
-Related: [[05 - Power Module CAN Bus Interface]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
+Related: [[04 - Power Module CAN Bus Interface]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
 
 ## 1. Overview
 
-The `PowerModuleDriver` is a custom EVerest C++ module that runs on the CM5 and bridges the EVerest `power_supply_DC` interface to the physical power modules on CAN #1. It translates high-level commands from EvseManager (set voltage, set current, change mode) into per-module CAN setpoints, while aggregating individual module status into a unified view for the rest of the EVerest stack.
+The `PowerModuleDriver` is a custom EVerest C++ module that runs on the Phytec SBC and bridges the EVerest `power_supply_DC` interface to the physical power modules on CAN #1. It translates high-level commands from EvseManager (set voltage, set current, change mode) into per-module CAN setpoints, while aggregating individual module status into a unified view for the rest of the EVerest stack.
 
 This module is the single point of coordination for all paralleled 25 kW bricks: it handles current distribution, module health tracking, N+1 redundancy failover, thermal derating compensation, and energy metering aggregation.
 
@@ -850,7 +850,7 @@ active_modules:
 
 ## 13. Related Documentation
 
-- [[05 - Power Module CAN Bus Interface]] — CAN message dictionary, physical layer, timing analysis
+- [[04 - Power Module CAN Bus Interface]] — CAN message dictionary, physical layer, timing analysis
 - [[01 - EVerest Safety Supervisor Integration]] — How EvseManager coordinates with safety and power supply
 - [[03 - Safety Supervisor Controller]] — Hardware ENABLE signal that overrides CAN commands
 - [[01 - Software Framework]] — EVerest module architecture and MQTT IPC

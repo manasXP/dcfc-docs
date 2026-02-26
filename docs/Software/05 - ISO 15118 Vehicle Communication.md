@@ -2,7 +2,7 @@
 
 Tags: #dcfc #iso15118 #everest #software #plc #slac #pnc #din70121
 
-Related: [[07 - EVerest OCPP201 Backend Integration]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[02 - Communication Protocols]] | [[docs/System/03 - Standards Compliance|03 - Standards Compliance]]
+Related: [[03 - EVerest OCPP201 Backend Integration]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[02 - Communication Protocols]] | [[docs/System/03 - Standards Compliance|03 - Standards Compliance]]
 
 ## 1. Overview
 
@@ -105,18 +105,18 @@ The coupling transformer provides:
 | QCA7000 / QCA7005 | Qualcomm | SPI (Mode 3, ≤12 MHz) | QCA7005: automotive | Linux kernel driver upstream (`CONFIG_QCA7000_SPI`). Appears as standard netdev. |
 | IS32CG5317 | Lumissil (ISSI) | SPI or RMII (100 Mbps Ethernet) | AEC-Q100 Grade 2 | EVerest provides out-of-the-box support. BMW production use. |
 
-**How the PLC modem connects to the CM5:**
+**How the PLC modem connects to the Phytec SBC:**
 
 ```
 Option A: SPI (QCA7005 or IS32CG5317 in SPI mode)
 
-  CM5 SoC ─── SPI bus ──► QCA7005 chip ──► Coupling transformer ──► CP line
+  Phytec SBC SoC ─── SPI bus ──► QCA7005 chip ──► Coupling transformer ──► CP line
                            │
                            └─ Linux sees as: eth1 (netdev via qca7000 driver)
 
 Option B: RMII / Ethernet (IS32CG5317 in RMII mode)
 
-  CM5 SoC ─── RMII/MII ──► IS32CG5317 ──► Coupling transformer ──► CP line
+  Phytec SBC SoC ─── RMII/MII ──► IS32CG5317 ──► Coupling transformer ──► CP line
                             │
                             └─ Linux sees as: eth1 (standard Ethernet MAC)
 
@@ -124,7 +124,7 @@ Either way, both EvseSlac and EvseV2G point to the same interface name (e.g., "c
 ```
 
 > [!note] PHYTEC PEB-X-005
-> PHYTEC's EVSE expansion board for the AM62x uses the IS32CG5317 over SPI. It includes a TI MSPM0 MCU for real-time EVSE logic. Suitable as an evaluation platform alongside the CM5.
+> PHYTEC's EVSE expansion board for the AM62x uses the IS32CG5317 over SPI. It includes a TI MSPM0 MCU for real-time EVSE logic. Suitable as an evaluation platform alongside the Phytec SBC.
 
 ## 3. SLAC: EV-to-EVSE Pairing
 
@@ -210,7 +210,7 @@ EV (EVCC)                                        EVSE (SECC)
 > [!tip] Auth flow integration
 > For **EIM** (RFID): EvseV2G publishes `require_auth_eim` → Auth module validates token via OCPP → `authorization_response(Accepted)` → AuthorizationRes(Finished).
 > For **PnC**: EvseV2G publishes `require_auth_pnc` with contract cert → OCPP sends `Authorize.req` with `iso15118CertificateHashData` → CSMS validates → `authorization_response(Accepted)`.
-> See [[07 - EVerest OCPP201 Backend Integration#7. Auth Module and Token Validation Flow]] for the full flow.
+> See [[03 - EVerest OCPP201 Backend Integration#7. Auth Module and Token Validation Flow]] for the full flow.
 
 ### 4.3 DC Charge Parameter Exchange
 
@@ -314,7 +314,7 @@ DC Bus Voltage
 > [!important] Control authority
 > The **EV is the current regulator** — it requests a target current, the EVSE delivers up to that limit. The EVSE reports its actual output and maximum limits. If the EVSE's max drops (e.g., module fault, smart charging), the EV must reduce its request accordingly.
 >
-> The `EVSEPresentVoltage` and `EVSEPresentCurrent` values come from the [[06 - EVerest Power Module Driver]] via `update_dc_present_values`, and the `EVSEMaximum*` limits come from `update_dc_maximum_limits`, which tracks the [[05 - Power Module CAN Bus Interface|power module]] aggregate capabilities.
+> The `EVSEPresentVoltage` and `EVSEPresentCurrent` values come from the [[02 - EVerest Power Module Driver]] via `update_dc_present_values`, and the `EVSEMaximum*` limits come from `update_dc_maximum_limits`, which tracks the [[04 - Power Module CAN Bus Interface|power module]] aggregate capabilities.
 
 ### 4.7 Session Termination
 
@@ -435,7 +435,7 @@ EVerest has `libiso15118` (C++ library) under active development for 15118-20 DC
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│                          CM5 (Linux + EVerest)                         │
+│                          Phytec SBC (Linux + EVerest)                         │
 │                                                                       │
 │  ┌──────────────┐                                                     │
 │  │  EvseManager │                                                     │
@@ -712,7 +712,7 @@ SessionStop               publish v2g_setup_finished  connector_lock.unlock()   
 │  ┌─────────▼───────────┐     └──────────────────────┘        │
 │  │   SECC Leaf Cert    │                                     │
 │  │   (EVSE identity)   │     EV presents Contract Cert       │
-│  │   Lives on CM5      │     to EVSE during TLS handshake    │
+│  │   Lives on Phytec SBC      │     to EVSE during TLS handshake    │
 │  └─────────────────────┘     EVSE forwards to CSMS via OCPP  │
 │                               for validation                  │
 │  TLS handshake:                                               │
@@ -722,14 +722,14 @@ SessionStop               publish v2g_setup_finished  connector_lock.unlock()   
 └───────────────────────────────────────────────────────────────┘
 ```
 
-Certificate management is handled by `EvseSecurity`. See [[07 - EVerest OCPP201 Backend Integration#8. EvseSecurity Module: Certificate Management]] for paths and auto-renewal.
+Certificate management is handled by `EvseSecurity`. See [[03 - EVerest OCPP201 Backend Integration#8. EvseSecurity Module: Certificate Management]] for paths and auto-renewal.
 
 ## 11. Related Documentation
 
-- [[07 - EVerest OCPP201 Backend Integration]] — OCPP PnC integration, certificate management, auth flow
+- [[03 - EVerest OCPP201 Backend Integration]] — OCPP PnC integration, certificate management, auth flow
 - [[01 - EVerest Safety Supervisor Integration]] — Contactor sequencing triggered by ISO 15118 phases
-- [[06 - EVerest Power Module Driver]] — Power supply providing present V/I values to CurrentDemandRes
-- [[05 - Power Module CAN Bus Interface]] — CAN #1 message dictionary for setpoint updates during charging
+- [[02 - EVerest Power Module Driver]] — Power supply providing present V/I values to CurrentDemandRes
+- [[04 - Power Module CAN Bus Interface]] — CAN #1 message dictionary for setpoint updates during charging
 - [[03 - Safety Supervisor Controller]] — CableCheck/PreCharge contactor sequences
 - [[01 - Software Framework]] — EVerest module architecture
 - [[02 - Communication Protocols]] — PLC link wiring, CAN bus topology

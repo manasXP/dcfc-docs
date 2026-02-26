@@ -2,7 +2,7 @@
 
 Tags: #dcfc #everest #software #energy-management #smart-charging #load-balancing
 
-Related: [[07 - EVerest OCPP201 Backend Integration]] | [[06 - EVerest Power Module Driver]] | [[08 - EVerest HVAC Driver]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
+Related: [[03 - EVerest OCPP201 Backend Integration]] | [[02 - EVerest Power Module Driver]] | [[04 - EVerest HVAC Driver]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
 
 ## 1. Overview
 
@@ -422,7 +422,7 @@ The EnergyManager receives thermal derating signals either through:
 
 **Approach A** — Direct subscription to HvacDriver's `derate_request` variable (requires custom EnergyManager extension)
 
-**Approach B** — A standalone `ThermalCoordinator` module that subscribes to `derate_request` and calls the EnergyManager's fuse limit API (documented in [[08 - EVerest HVAC Driver#14.2 EvseManager HVAC Subscription]])
+**Approach B** — A standalone `ThermalCoordinator` module that subscribes to `derate_request` and calls the EnergyManager's fuse limit API (documented in [[04 - EVerest HVAC Driver#14.2 EvseManager HVAC Subscription]])
 
 Either way, the effect is the same: the available power budget is reduced by the derating fraction:
 
@@ -447,7 +447,7 @@ If thermal conditions worsen to `Shutdown`, the EnergyManager sets `enforce_limi
 
 ## 8. OCPP Smart Charging Integration
 
-The OCPP201 module calculates composite charging schedules from all active `ChargingProfile`s and publishes them to EnergyManager via the `external_energy_limits` interface. See [[07 - EVerest OCPP201 Backend Integration#6. Smart Charging]] for the full OCPP profile structure.
+The OCPP201 module calculates composite charging schedules from all active `ChargingProfile`s and publishes them to EnergyManager via the `external_energy_limits` interface. See [[03 - EVerest OCPP201 Backend Integration#6. Smart Charging]] for the full OCPP profile structure.
 
 ### 8.1 Data Flow
 
@@ -501,7 +501,7 @@ The CSMS can query the effective schedule via `GetCompositeSchedule.req`. This i
 
 ## 9. Module Shedding Coordination
 
-The EnergyManager's `enforce_limits` directly affects how many power modules need to be active. The PowerModuleDriver implements module shedding (documented in [[06 - EVerest Power Module Driver#11. Efficiency Optimization: Module Shedding]]) based on the actual demand:
+The EnergyManager's `enforce_limits` directly affects how many power modules need to be active. The PowerModuleDriver implements module shedding (documented in [[02 - EVerest Power Module Driver#11. Efficiency Optimization: Module Shedding]]) based on the actual demand:
 
 ```
 enforce_limits = 75 kW
@@ -811,9 +811,9 @@ active_modules:
 
 ## 14. Related Documentation
 
-- [[07 - EVerest OCPP201 Backend Integration]] — Smart charging profiles, composite schedules, `evse_energy_sink`
-- [[06 - EVerest Power Module Driver]] — Power supply control, module shedding, current distribution
-- [[08 - EVerest HVAC Driver]] — HVAC power metering, thermal derating signals, ThermalCoordinator
+- [[03 - EVerest OCPP201 Backend Integration]] — Smart charging profiles, composite schedules, `evse_energy_sink`
+- [[02 - EVerest Power Module Driver]] — Power supply control, module shedding, current distribution
+- [[04 - EVerest HVAC Driver]] — HVAC power metering, thermal derating signals, ThermalCoordinator
 - [[01 - EVerest Safety Supervisor Integration]] — BSP module, contactor control, safety boundary
 - [[01 - Software Framework]] — EVerest microservices architecture, MQTT IPC
 - [[02 - Communication Protocols]] — CAN bus topology, OCPP network wiring

@@ -55,7 +55,7 @@ The clip-on form factor means the HVAC unit is a field-replaceable unit (FRU) th
     │                                                        │
     │   ┌───────────────────┐                                │
     │   │  HVAC Controller  │  MCU + CAN interface           │
-    │   │  (STM32 / RP2350) │  to CM5 Main Controller        │
+    │   │  (STM32 / RP2350) │  to Phytec SBC Main Controller        │
     │   └───────────────────┘                                │
     │                                                        │
     └────────────────────────────────────────────────────────┘
@@ -318,20 +318,20 @@ Air Split:
 
 ### 6.1 MCU and Electronics
 
-The HVAC unit contains its own embedded controller that runs the refrigeration cycle autonomously based on commands from the CM5 main controller.
+The HVAC unit contains its own embedded controller that runs the refrigeration cycle autonomously based on commands from the Phytec SBC main controller.
 
 | Parameter | Value |
 |-----------|-------|
 | MCU | STM32F103 or RP2350 |
 | Architecture | Bare-metal or FreeRTOS |
-| CAN interface | CAN 2.0B, 250 kbps (to CM5 via CAN #3) |
+| CAN interface | CAN 2.0B, 250 kbps (to Phytec SBC via CAN #3) |
 | ADC channels | 6 (4× temperature, 1× pressure, 1× current) |
 | PWM outputs | 3 (compressor inverter, internal fan, external fan) |
 | Digital outputs | 3 (EEV stepper, heater relay, fault LED) |
 | Digital inputs | 2 (high-pressure switch, low-pressure switch) |
 | Power supply | 24V DC input → internal 3.3V/5V regulator |
 | Firmware update | CAN bootloader or UART/SWD debug port |
-| Watchdog | Internal IWDG; autonomous safe mode on CM5 timeout |
+| Watchdog | Internal IWDG; autonomous safe mode on Phytec SBC timeout |
 
 ### 6.2 Sensor Inputs
 
@@ -371,8 +371,8 @@ MAIN CONTROL LOOP (runs every 1 second)
 │    └── T2 > 65°C? → Disable compressor, reduce condenser fan
 │
 ├─── DETERMINE operating mode
-│    ├── Mode from CM5 command (CAN 0x200)
-│    ├── If CM5 heartbeat lost > 6 s → AUTONOMOUS MODE
+│    ├── Mode from Phytec SBC command (CAN 0x200)
+│    ├── If Phytec SBC heartbeat lost > 6 s → AUTONOMOUS MODE
 │    └── If critical fault → SHUTDOWN MODE
 │
 ├─── EXECUTE mode logic
@@ -385,7 +385,7 @@ MAIN CONTROL LOOP (runs every 1 second)
 │    ├── COOLING:
 │    │   ┌─── PID Controller: Compressor Speed
 │    │   │    Input: T1 (cabinet temp)
-│    │   │    Setpoint: From CM5 command (default 35°C)
+│    │   │    Setpoint: From Phytec SBC command (default 35°C)
 │    │   │    Output: Compressor RPM (1800-7200)
 │    │   │    Kp=10, Ki=0.5, Kd=2 (tunable)
 │    │   │
@@ -420,7 +420,7 @@ MAIN CONTROL LOOP (runs every 1 second)
 
 ### 6.5 Autonomous Safe Mode
 
-If the HVAC controller loses CAN communication with the CM5 for more than 6 seconds (3 missed heartbeat cycles), it enters autonomous mode:
+If the HVAC controller loses CAN communication with the Phytec SBC for more than 6 seconds (3 missed heartbeat cycles), it enters autonomous mode:
 
 | Behaviour | Description |
 |-----------|-------------|
@@ -428,7 +428,7 @@ If the HVAC controller loses CAN communication with the CM5 for more than 6 seco
 | Compressor at 70% | Cap compressor speed to avoid unnecessary wear |
 | Internal fan at 60% | Moderate airflow |
 | Fault LED on | Steady red to indicate communication loss |
-| Status messages continue | HVAC keeps transmitting on CAN in case CM5 recovers |
+| Status messages continue | HVAC keeps transmitting on CAN in case Phytec SBC recovers |
 | Timeout (30 min) | If no recovery, HVAC transitions to max cooling as precaution |
 
 ## 7. Electrical Design
@@ -660,7 +660,7 @@ When the evaporator coil temperature (T3) drops below 0°C for more than 10 minu
 | 5 | 0 s | Close hot-gas bypass, resume normal cooling |
 | 6 | 30 s | Ramp internal fan back to normal speed |
 
-Defrost is reported to CM5 via operating mode (mode = DEFROST in CAN 0x101). The CM5 may pre-emptively derate charger output during defrost if cabinet temperature is already elevated.
+Defrost is reported to Phytec SBC via operating mode (mode = DEFROST in CAN 0x101). The Phytec SBC may pre-emptively derate charger output during defrost if cabinet temperature is already elevated.
 
 ## 10. Maintenance and Serviceability
 
@@ -685,7 +685,7 @@ The entire HVAC unit is designed as a field-replaceable unit. Swap time target: 
 ```
 HVAC FRU SWAP PROCEDURE
 
-1. CHARGER → STANDBY (CM5 sets HVAC mode = OFF via OCPP or local HMI)
+1. CHARGER → STANDBY (Phytec SBC sets HVAC mode = OFF via OCPP or local HMI)
    Wait for compressor to stop and pressures to equalize (~2 min)
 
 2. DISCONNECT ELECTRICAL
@@ -710,8 +710,8 @@ HVAC FRU SWAP PROCEDURE
 
 6. COMMISSION
    a. Power on charger → HVAC auto-detected on CAN #3
-   b. CM5 sends HVAC_Config (0x201) with alarm thresholds
-   c. CM5 sends mode = COOLING, verify compressor starts
+   b. Phytec SBC sends HVAC_Config (0x201) with alarm thresholds
+   c. Phytec SBC sends mode = COOLING, verify compressor starts
    d. Verify temperatures trending correctly on HMI diagnostics
    e. Verify no CAN faults in safety supervisor log
 ```
@@ -721,7 +721,7 @@ HVAC FRU SWAP PROCEDURE
 | Access Method | What It Provides |
 |---------------|-----------------|
 | CAN diagnostic messages (0x103) | Runtime hours, compressor cycles, energy consumption |
-| CM5 HMI diagnostic screen | Real-time temperatures, pressures, fan speeds, mode |
+| Phytec SBC HMI diagnostic screen | Real-time temperatures, pressures, fan speeds, mode |
 | OCPP `DiagnosticsStatusNotification` | Remote access to HVAC health data via backend |
 | HVAC fault LED | Local visual indication of fault on the unit itself |
 | UART debug port (on HVAC controller) | Low-level firmware diagnostics, sensor raw values |

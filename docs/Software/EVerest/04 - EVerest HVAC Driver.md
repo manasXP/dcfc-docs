@@ -2,11 +2,11 @@
 
 Tags: #dcfc #everest #software #hvac #thermal #can #cpp
 
-Related: [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]] | [[06 - EVerest Power Module Driver]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
+Related: [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]] | [[02 - EVerest Power Module Driver]] | [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framework]] | [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]
 
 ## 1. Overview
 
-The `HvacDriver` is a custom EVerest C++ module that runs on the CM5 and bridges the HVAC clip-on unit on CAN #3 to the EVerest framework. Unlike the power module driver or safety supervisor BSP — which implement standard EVerest interfaces (`power_supply_DC`, `evse_board_support`) — the HVAC driver implements a **custom `thermal_management` interface**, since EVerest has no built-in abstraction for cabinet cooling.
+The `HvacDriver` is a custom EVerest C++ module that runs on the Phytec SBC and bridges the HVAC clip-on unit on CAN #3 to the EVerest framework. Unlike the power module driver or safety supervisor BSP — which implement standard EVerest interfaces (`power_supply_DC`, `evse_board_support`) — the HVAC driver implements a **custom `thermal_management` interface**, since EVerest has no built-in abstraction for cabinet cooling.
 
 The module translates high-level thermal commands (set mode, set setpoint, configure alarms) into CAN frames per the [[docs/HVAC/04 - HVAC CANBus Interface Specification|HVAC CAN protocol]], while aggregating HVAC telemetry (temperatures, pressures, fault codes) into EVerest variables consumed by EvseManager, EnergyManager, and OCPP.
 
@@ -303,10 +303,10 @@ modules/HvacDriver/
 
 ### 5.1 CanBridge
 
-Same `CanBridge` class used by the PowerModuleDriver (see [[06 - EVerest Power Module Driver#5.1 CanBridge]]). Opens `can2` (CAN #3) at 250 kbps, provides thread-safe TX and callback-driven RX.
+Same `CanBridge` class used by the PowerModuleDriver (see [[02 - EVerest Power Module Driver#5.1 CanBridge]]). Opens `can2` (CAN #3) at 250 kbps, provides thread-safe TX and callback-driven RX.
 
 > [!note] SocketCAN device mapping
-> Linux SocketCAN enumerates interfaces as `can0`, `can1`, `can2`, etc. In our CM5 configuration:
+> Linux SocketCAN enumerates interfaces as `can0`, `can1`, `can2`, etc. In our Phytec SBC configuration:
 > - `can0` → CAN #2 (safety supervisor, used by SafetySupervisorBSP)
 > - `can1` → CAN #1 (power modules, used by PowerModuleDriver)
 > - `can2` → CAN #3 (HVAC, used by HvacDriver)
@@ -490,12 +490,12 @@ CAN frame encoding/decoding helpers matching the [[docs/HVAC/04 - HVAC CANBus In
 namespace HvacCan {
 
 // CAN IDs (from HVAC CAN spec section 3.2)
-constexpr uint32_t HVAC_STATUS_1     = 0x100;  // HVAC → CM5: temperatures
-constexpr uint32_t HVAC_STATUS_2     = 0x101;  // HVAC → CM5: operating data
-constexpr uint32_t HVAC_FAULTS       = 0x102;  // HVAC → CM5: fault report
-constexpr uint32_t HVAC_DIAGNOSTICS  = 0x103;  // HVAC → CM5: runtime stats
-constexpr uint32_t HVAC_COMMAND      = 0x200;  // CM5 → HVAC: mode + setpoint
-constexpr uint32_t HVAC_CONFIG       = 0x201;  // CM5 → HVAC: alarm thresholds
+constexpr uint32_t HVAC_STATUS_1     = 0x100;  // HVAC → Phytec SBC: temperatures
+constexpr uint32_t HVAC_STATUS_2     = 0x101;  // HVAC → Phytec SBC: operating data
+constexpr uint32_t HVAC_FAULTS       = 0x102;  // HVAC → Phytec SBC: fault report
+constexpr uint32_t HVAC_DIAGNOSTICS  = 0x103;  // HVAC → Phytec SBC: runtime stats
+constexpr uint32_t HVAC_COMMAND      = 0x200;  // Phytec SBC → HVAC: mode + setpoint
+constexpr uint32_t HVAC_CONFIG       = 0x201;  // Phytec SBC → HVAC: alarm thresholds
 constexpr uint32_t HEARTBEAT         = 0x7FF;  // Both: heartbeat (2000 ms)
 
 // Temperature encoding: int16_t LE, 0.1 °C per bit
@@ -510,7 +510,7 @@ inline void encode_temp(uint8_t* data, int offset, double temp_C) {
     data[offset + 1] = (raw >> 8) & 0xFF;
 }
 
-// Build HVAC_Command frame (CM5 → HVAC, CAN 0x200)
+// Build HVAC_Command frame (Phytec SBC → HVAC, CAN 0x200)
 inline void build_command_frame(uint8_t* frame,
                                 uint8_t mode,
                                 double setpoint_C,
@@ -526,7 +526,7 @@ inline void build_command_frame(uint8_t* frame,
     frame[7] = 0;
 }
 
-// Build HVAC_Config frame (CM5 → HVAC, CAN 0x201)
+// Build HVAC_Config frame (Phytec SBC → HVAC, CAN 0x201)
 inline void build_config_frame(uint8_t* frame,
                                double high_alarm_C,
                                double low_alarm_C,
@@ -1163,7 +1163,7 @@ The simulator models:
 | Cold climate startup | Ambient -15°C, charger idle | HVAC in Heating mode, cabinet maintained >5°C |
 | Pre-cooling | CP state A→B (EV plugs in) | HVAC switches to Cooling before heat load appears |
 | HVAC FRU swap | Remove HVAC CAN during standby | Comm loss detected, blanking plates procedure |
-| Defrost during session | Evaporator <0°C for 10 min | HVAC enters Defrost, CM5 logs mode change, may pre-derate |
+| Defrost during session | Evaporator <0°C for 10 min | HVAC enters Defrost, Phytec SBC logs mode change, may pre-derate |
 
 ## 16. OCPP Integration
 
@@ -1183,7 +1183,7 @@ The OCPP module subscribes to HvacDriver's published variables via the normal EV
 
 - [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]] — CAN message dictionary, physical layer, control logic
 - [[docs/Hardware/06 - HVAC Clip-On Unit Hardware Design|06 - HVAC Clip-On Unit Hardware Design]] — HVAC hardware design, refrigeration, mechanical interface
-- [[06 - EVerest Power Module Driver]] — Parallel CAN-based EVerest driver (design pattern reference)
+- [[02 - EVerest Power Module Driver]] — Parallel CAN-based EVerest driver (design pattern reference)
 - [[01 - EVerest Safety Supervisor Integration]] — Safety BSP module pattern and YAML wiring
 - [[03 - Safety Supervisor Controller]] — Safety state machine and thermal fault handling
 - [[01 - Software Framework]] — EVerest module architecture and MQTT IPC

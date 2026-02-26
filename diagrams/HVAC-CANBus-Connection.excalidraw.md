@@ -13,13 +13,13 @@ tags: [excalidraw]
 HVAC CANBus Electrical Connection Diagram ^title01
 MAIN CONTROLLER ^cm5title
 
-(Raspberry Pi CM5 + IO Board) ^cm5sub
+(Phytec phyCORE-AM62x) ^cm5sub
 
-Waveshare Iso CAN Module ^wavtitle
+Native CAN FD #3 ^wavtitle
 
 CAN Channel 3 ^wavch3
 
-3 kV Galvanic Isolation ^waviso
+On-chip CAN FD Transceiver ^waviso
 
 CAN #1 → DC Power Bricks ^can1label
 
@@ -75,11 +75,11 @@ EVSE AUX BOARD ^evselabel
 
 HVAC CANBus Electrical Connection Diagram ^title01
 
-(Raspberry Pi CM5 + IO Board) ^cm5sub
+(Phytec phyCORE-AM62x) ^cm5sub
 
 CAN Channel 3 ^wavch3
 
-3 kV Galvanic Isolation ^waviso
+On-chip CAN FD Transceiver ^waviso
 
 CAN #1 → DC Power Bricks ^jiDI6UNj
 

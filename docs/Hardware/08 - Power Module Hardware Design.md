@@ -2,7 +2,7 @@
 
 Tags: #dcfc #hardware #power-electronics #sic #pfc #llc #power-module
 
-Related: [[01 - Hardware Components]] | [[02 - Electric Wiring Diagram]] | [[03 - Cabinet Layout]] | [[04 - Backplane Power Management]] | [[docs/System/01 - System Architecture|01 - System Architecture]] | [[docs/Software/05 - Power Module CAN Bus Interface|05 - Power Module CAN Bus Interface]]
+Related: [[01 - Hardware Components]] | [[02 - Electric Wiring Diagram]] | [[03 - Cabinet Layout]] | [[04 - Backplane Power Management]] | [[docs/System/01 - System Architecture|01 - System Architecture]] | [[docs/Software/04 - Power Module CAN Bus Interface|04 - Power Module CAN Bus Interface]]
 
 ## 1. Overview
 
@@ -12,7 +12,7 @@ Each module contains two conversion stages:
 1. **PFC Stage** (AC → DC link) — A Vienna rectifier that converts 3-phase AC to a stable ~800V DC link while maintaining >0.99 power factor and <5% THD
 2. **DC-DC Stage** (DC link → Isolated DC output) — An LLC resonant converter with a high-frequency transformer that provides galvanic isolation and regulates the output voltage across the full 200–1000V range
 
-The module includes its own DSP controller, gate drivers, sensors, protection circuits, and CAN interface. It operates autonomously in closed-loop control and receives high-level voltage/current setpoints from the CM5 main controller over CAN #1.
+The module includes its own DSP controller, gate drivers, sensors, protection circuits, and CAN interface. It operates autonomously in closed-loop control and receives high-level voltage/current setpoints from the Phytec SBC main controller over CAN #1.
 
 ## 2. Module Block Diagram
 
@@ -42,7 +42,7 @@ The module includes its own DSP controller, gate drivers, sensors, protection ci
 │  │  ┌──────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────┐ ┌──────────────┐ │ │
 │  │  │ DSP  │ │  Gate    │ │ Voltage  │ │ Current  │ │Temp │ │   CAN #1     │ │ │
 │  │  │ MCU  │◄│  Drivers │ │ Sensing  │ │ Sensing  │ │Sens │ │  Interface   │ │ │
-│  │  │      │►│ (6× PFC  │ │ (AC in,  │ │ (AC in,  │ │(6×  │ │  to CM5     │ │ │
+│  │  │      │►│ (6× PFC  │ │ (AC in,  │ │ (AC in,  │ │(6×  │ │  to Phytec SBC     │ │ │
 │  │  │      │ │  4× LLC) │ │  DC link,│ │  DC out) │ │NTC) │ │  (500 kbps) │ │ │
 │  │  └──────┘ └──────────┘ │  DC out) │ └──────────┘ └─────┘ └──────────────┘ │ │
 │  │                        └──────────┘                                         │ │
@@ -424,7 +424,7 @@ Dead time: 100–300 ns (adaptive)
 
 ### 6.1 DSP / MCU
 
-The module controller runs the real-time control loops for both PFC and LLC stages, manages protection, and communicates with the CM5 over CAN.
+The module controller runs the real-time control loops for both PFC and LLC stages, manages protection, and communicates with the Phytec SBC over CAN.
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
@@ -921,7 +921,7 @@ Key timing constraints:
 | 1 | 5 modules charging at 125 kW (5 × 25 kW) | Stable operation |
 | 2 | Disconnect Module 3 (pull from shelf) | Remaining 4 modules absorb load within 200 ms |
 | 3 | Insert replacement Module 3 | Module detected via heartbeat, enters standby |
-| 4 | CM5 enables replacement module | Current redistributed across 5 modules |
+| 4 | Phytec SBC enables replacement module | Current redistributed across 5 modules |
 | 5 | Verify no session interruption | EV continues charging at full rate |
 
 ## 15. References
@@ -936,8 +936,8 @@ Key timing constraints:
 - [[04 - Backplane Power Management]] — PDU 1 feeds to power modules
 - [[05 - DC Output Contactor and Pre-Charge Circuit]] — Downstream switching
 - [[docs/System/01 - System Architecture|01 - System Architecture]] — Modular power architecture, thermal zones
-- [[docs/Software/05 - Power Module CAN Bus Interface|05 - Power Module CAN Bus Interface]] — CAN message dictionary
-- [[docs/Software/06 - EVerest Power Module Driver|06 - EVerest Power Module Driver]] — EVerest software interface
+- [[docs/Software/04 - Power Module CAN Bus Interface|04 - Power Module CAN Bus Interface]] — CAN message dictionary
+- [[docs/Software/EVerest/02 - EVerest Power Module Driver|02 - EVerest Power Module Driver]] — EVerest software interface
 - [[docs/Software/03 - Safety Supervisor Controller|03 - Safety Supervisor Controller]] — ENABLE signal and safety shutdown
 
 ---

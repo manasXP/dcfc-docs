@@ -6,7 +6,7 @@ Related: [[01 - Software Framework]] | [[research/01 - Safety Philosophy|01 - Sa
 
 ## 1. Overview
 
-The Safety Supervisor Controller is a dedicated microcontroller (STM32Fxxx) running independent safety-critical firmware. It operates as the middle layer between the hardwired interlock chain and the CM5 main controller running Everest. Its sole purpose is to enforce safety invariants—even if the main controller hangs, crashes, or issues incorrect commands.
+The Safety Supervisor Controller is a dedicated microcontroller (STM32Fxxx) running independent safety-critical firmware. It operates as the middle layer between the hardwired interlock chain and the Phytec SBC main controller running Everest. Its sole purpose is to enforce safety invariants—even if the main controller hangs, crashes, or issues incorrect commands.
 
 This controller is **not** part of the EVerest software stack. It runs bare-metal or minimal RTOS firmware with deterministic timing guarantees.
 
@@ -14,14 +14,14 @@ This controller is **not** part of the EVerest software stack. It runs bare-meta
 ┌──────────────────────────────────────────────────────────────────┐
 │                      SAFETY LAYERS                               │
 │                                                                  │
-│  LAYER 3: CM5 + EVerest (supervisory, non-safety)                │
+│  LAYER 3: Phytec SBC + EVerest (supervisory, non-safety)                │
 │     │  Session logic, OCPP, ISO 15118, energy management         │
 │     │  Sends "enable request" and setpoints                      │
 │     ▼                                                            │
 │  LAYER 2: SAFETY SUPERVISOR (STM32, SIL2/PLd)                    │
 │     │  Validates all preconditions before allowing power         │
-│     │  Monitors fault signals, watchdog on CM5                   │
-│     │  Can override CM5 commands and force shutdown              │
+│     │  Monitors fault signals, watchdog on Phytec SBC                   │
+│     │  Can override Phytec SBC commands and force shutdown              │
 │     ▼                                                            │
 │  LAYER 1: HARDWARE INTERLOCK CHAIN (no software)                 │
 │     E-STOP → Door → IMD → RCD → Thermal → Safety Relay           │
@@ -39,12 +39,12 @@ The safety supervisor handles functions that must continue operating correctly i
 | **Contactor Sequencing** | Controls AC input, precharge, and DC output contactor timing |
 | **Precharge Verification** | Confirms DC bus voltage reaches target before closing main contactors |
 | **Welding Detection** | Checks contactor feedback after open command to detect welded contacts |
-| **Watchdog on CM5** | Expects periodic heartbeat from CM5; forces shutdown on timeout |
+| **Watchdog on Phytec SBC** | Expects periodic heartbeat from Phytec SBC; forces shutdown on timeout |
 | **Fault Aggregation** | Reads all safety input signals and determines appropriate response |
 | **Voltage/Current Limits** | Independent OVP/OCP check using its own ADC readings |
 | **Ground Fault Response** | Reacts to IMD and RCD fault signals |
 | **Emergency Stop Handling** | Processes E-STOP input and coordinates safe de-energization |
-| **State Reporting** | Reports safety state and fault codes to CM5 over CAN/UART |
+| **State Reporting** | Reports safety state and fault codes to Phytec SBC over CAN/UART |
 
 ## 3. Hardware Interface
 
@@ -72,8 +72,8 @@ The safety supervisor handles functions that must continue operating correctly i
 │   AI3: Ambient temperature (NTC thermistor)                  │
 │                                                              │
 │  COMMUNICATION:                                              │
-│   CAN: From CM5 (heartbeat, enable request, setpoints)       │
-│   UART: Backup link to CM5 (optional, for diagnostics)       │
+│   CAN: From Phytec SBC (heartbeat, enable request, setpoints)       │
+│   UART: Backup link to Phytec SBC (optional, for diagnostics)       │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -95,14 +95,14 @@ The safety supervisor handles functions that must continue operating correctly i
 │   DO7: Safety relay ENABLE (to hardware interlock chain)      │
 │                                                              │
 │  COMMUNICATION:                                              │
-│   CAN: To CM5 (safety state, fault codes, measurements)      │
+│   CAN: To Phytec SBC (safety state, fault codes, measurements)      │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ## 4. Safety State Machine
 
-The core of the safety supervisor firmware is a deterministic state machine. Transitions are driven by input conditions and commands from the CM5.
+The core of the safety supervisor firmware is a deterministic state machine. Transitions are driven by input conditions and commands from the Phytec SBC.
 
 ```
                         ┌─────────┐
@@ -113,7 +113,7 @@ The core of the safety supervisor firmware is a deterministic state machine. Tra
                    │    ┌─────────┐
                    │    │  IDLE   │◀──────────────────────────┐
                    │    └────┬────┘                           │
-                   │         │ CM5 enable + all inputs OK     │
+                   │         │ Phytec SBC enable + all inputs OK     │
                    │         ▼                                │
                    │    ┌──────────┐                          │
                    │    │ AC_CLOSE │ Close AC contactor       │
@@ -134,7 +134,7 @@ The core of the safety supervisor firmware is a deterministic state machine. Tra
                    │    ┌───────────┐                         │
                    │    │ CHARGING  │ Power delivery active   │
                    │    └────┬──────┘                         │
-                   │         │ CM5 stop or session end        │
+                   │         │ Phytec SBC stop or session end        │
                    │         ▼                                │
                    │    ┌───────────┐                         │
                    │    │ SHUTDOWN  │ Orderly de-energization │───┘
@@ -143,7 +143,7 @@ The core of the safety supervisor firmware is a deterministic state machine. Tra
                    │    ┌───────────┐
                    └────│   FAULT   │◀─── Any fault from any state
                         └────┬──────┘
-                             │ Fault cleared + CM5 reset cmd
+                             │ Fault cleared + Phytec SBC reset cmd
                              ▼
                         ┌───────────┐
                         │   IDLE    │
@@ -153,7 +153,7 @@ The core of the safety supervisor firmware is a deterministic state machine. Tra
                         │ EMERGENCY │◀─── E-STOP from any state
                         │   STOP    │     (immediate contactor drop)
                         └───────────┘
-                             │ E-STOP released + CM5 reset
+                             │ E-STOP released + Phytec SBC reset
                              ▼
                         ┌───────────┐
                         │   INIT    │ (full re-initialization)
@@ -165,14 +165,14 @@ The core of the safety supervisor firmware is a deterministic state machine. Tra
 | State | Entry Condition | Actions | Exit Condition |
 |-------|----------------|---------|----------------|
 | **INIT** | Power-on / E-STOP recovery | Self-test: check ADC, CAN, GPIO. Verify all outputs OFF. | Self-test pass → IDLE |
-| **IDLE** | Init complete or shutdown complete | All contactors open. Monitor inputs. Wait for CM5 enable. | CM5 enable + all OK → AC_CLOSE |
+| **IDLE** | Init complete or shutdown complete | All contactors open. Monitor inputs. Wait for Phytec SBC enable. | Phytec SBC enable + all OK → AC_CLOSE |
 | **AC_CLOSE** | Enable received, inputs healthy | Energize AC contactor. Start feedback timeout (200 ms). | Feedback OK → PRECHARGE |
 | **PRECHARGE** | AC contactor confirmed closed | Close precharge relay. Monitor DC bus voltage ramp. | V_bus within target ±5% → DC_CLOSE |
 | **DC_CLOSE** | Precharge complete | Open precharge relay, close DC main contactor. Verify feedback. | Feedback OK → CHARGING |
-| **CHARGING** | DC contactor confirmed closed | Monitor V/I limits, watchdog, all safety inputs. Assert ENABLE to power modules. | CM5 stop → SHUTDOWN |
+| **CHARGING** | DC contactor confirmed closed | Monitor V/I limits, watchdog, all safety inputs. Assert ENABLE to power modules. | Phytec SBC stop → SHUTDOWN |
 | **SHUTDOWN** | Normal stop requested | De-assert ENABLE. Wait for current < 5A. Open DC contactor, then AC contactor. | All contactors open → IDLE |
-| **FAULT** | Any monitored fault | Immediate: disable power modules. Sequential: open DC, then AC contactors. Latch fault code. | Fault cleared + CM5 reset → IDLE |
-| **EMERGENCY STOP** | E-STOP input active | Drop all contactors immediately (no sequencing). | E-STOP released + CM5 reset → INIT |
+| **FAULT** | Any monitored fault | Immediate: disable power modules. Sequential: open DC, then AC contactors. Latch fault code. | Fault cleared + Phytec SBC reset → IDLE |
+| **EMERGENCY STOP** | E-STOP input active | Drop all contactors immediately (no sequencing). | E-STOP released + Phytec SBC reset → INIT |
 
 ### 4.2 Fault Conditions
 
@@ -184,7 +184,7 @@ The core of the safety supervisor firmware is a deterministic state machine. Tra
 | `F04` | RCD trip (ground fault) | < 30 ms | Critical |
 | `F05` | Contactor weld detected | At open command | Critical |
 | `F06` | Precharge timeout (>3 s) | 3 s | Major |
-| `F07` | CM5 watchdog timeout | 2 s | Major |
+| `F07` | Phytec SBC watchdog timeout | 2 s | Major |
 | `F08` | Over-temperature (component) | 500 ms | Major |
 | `F09` | Door interlock open | < 100 ms | Major |
 | `F10` | Contactor feedback mismatch | 200 ms | Major |
@@ -240,7 +240,7 @@ The firmware uses a strict cyclic execution model for deterministic timing:
 | ADC Measurement + OVP/OCP | 1 ms | 1 ms | Highest |
 | State Machine Tick | 10 ms | 10 ms | High |
 | Contactor Sequencer | 10 ms | 10 ms | High |
-| CM5 Watchdog Check | 100 ms | 100 ms | Medium |
+| Phytec SBC Watchdog Check | 100 ms | 100 ms | Medium |
 | CAN TX (status report) | 100 ms | 100 ms | Medium |
 | CAN RX (command parse) | 10 ms | 10 ms | High |
 | Self-Test (background) | 1 s | 1 s | Low |
@@ -251,24 +251,24 @@ The firmware uses a strict cyclic execution model for deterministic timing:
 - **No blocking calls** — all I/O is interrupt-driven or polled within cycle time
 - **Defensive coding** — all inputs range-checked, all state transitions validated
 - **Fail-safe defaults** — all outputs default to OFF/open on any unexpected condition
-- **Independent measurement** — OVP/OCP uses STM32's own ADC, not values reported by CM5 or power modules
-- **Watchdog stack** — internal IWDG (independent watchdog) resets the STM32 if firmware hangs; CM5 heartbeat timeout triggers safe shutdown if CM5 hangs
+- **Independent measurement** — OVP/OCP uses STM32's own ADC, not values reported by Phytec SBC or power modules
+- **Watchdog stack** — internal IWDG (independent watchdog) resets the STM32 if firmware hangs; Phytec SBC heartbeat timeout triggers safe shutdown if Phytec SBC hangs
 
-## 6. CM5 Communication Protocol
+## 6. Phytec SBC Communication Protocol
 
 ### 6.1 CAN Interface
 
-Communication between the safety supervisor and CM5 uses CAN 2.0B at 500 kbps.
+Communication between the safety supervisor and Phytec SBC uses CAN 2.0B at 500 kbps.
 
-#### Messages from CM5 → Safety Supervisor
+#### Messages from Phytec SBC → Safety Supervisor
 
 | CAN ID | Name | Period | Payload |
 |--------|------|--------|---------|
-| `0x100` | Heartbeat | 500 ms | Counter (8-bit rolling), CM5 state |
+| `0x100` | Heartbeat | 500 ms | Counter (8-bit rolling), Phytec SBC state |
 | `0x101` | Enable Request | On change | Enable/Disable flag, requested V/I limits |
 | `0x102` | Reset Command | On demand | Fault reset request, restart type |
 
-#### Messages from Safety Supervisor → CM5
+#### Messages from Safety Supervisor → Phytec SBC
 
 | CAN ID | Name | Period | Payload |
 |--------|------|--------|---------|
@@ -279,22 +279,22 @@ Communication between the safety supervisor and CM5 uses CAN 2.0B at 500 kbps.
 ### 6.2 Heartbeat Protocol
 
 ```
-CM5 sends 0x100 every 500 ms:
+Phytec SBC sends 0x100 every 500 ms:
   Byte 0: Rolling counter (0-255, incrementing)
-  Byte 1: CM5 operating state
+  Byte 1: Phytec SBC operating state
 
 Safety Supervisor checks:
   - Message received within 2 s window (4 missed heartbeats)
   - Counter is incrementing (not stuck)
-  - If either fails → F07 (CM5 watchdog timeout) → FAULT state
+  - If either fails → F07 (Phytec SBC watchdog timeout) → FAULT state
 ```
 
 ### 6.3 Enable Handshake
 
-The CM5 cannot directly control contactors. It can only *request* that the safety supervisor enable charging:
+The Phytec SBC cannot directly control contactors. It can only *request* that the safety supervisor enable charging:
 
 ```
-1. CM5 sends Enable Request (0x101) with desired V/I limits
+1. Phytec SBC sends Enable Request (0x101) with desired V/I limits
 2. Safety supervisor validates:
    - All safety inputs OK
    - Requested V/I within hardware limits
@@ -304,7 +304,7 @@ The CM5 cannot directly control contactors. It can only *request* that the safet
 4. If invalid → reject, report reason in Safety Status (0x200)
 ```
 
-This ensures the CM5 never has direct authority over high-voltage contactors.
+This ensures the Phytec SBC never has direct authority over high-voltage contactors.
 
 ## 7. Contactor Sequencing Detail
 
@@ -362,7 +362,7 @@ Typical timing:
 3. De-assert safety relay ENABLE (DO7 = OFF)
    → Hardware interlock chain also drops all contactors
 4. Latch fault code
-5. Report to CM5 via CAN
+5. Report to Phytec SBC via CAN
 ```
 
 No sequencing is performed during emergency shutdown—all outputs are dropped simultaneously within one scan cycle (1 ms).
@@ -416,8 +416,8 @@ The safety supervisor firmware is developed according to:
 
 ## 10. Related Documentation
 
-- [[01 - Software Framework]] — EVerest framework running on CM5
+- [[01 - Software Framework]] — EVerest framework running on Phytec SBC
 - [[research/01 - Safety Philosophy|01 - Safety Philosophy]] — Hardware interlock design
-- [[research/02 - CM5 based Main Controller|02 - CM5 based Main Controller]] — CM5 architecture and EVSE aux board
+- [[research/02 - Phytec SBC based Main Controller|02 - Phytec SBC based Main Controller]] — Phytec SBC architecture and EVSE aux board
 - [[docs/System/01 - System Architecture|01 - System Architecture]] — System-level safety architecture
 - [[docs/Hardware/01 - Hardware Components|01 - Hardware Components]] — Protection devices and contactors

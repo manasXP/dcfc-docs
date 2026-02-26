@@ -6,11 +6,11 @@ Related: [[03 - Safety Supervisor Controller]] | [[01 - Software Framework]] | [
 
 ## 1. Overview
 
-This document describes how the EVerest software framework running on the CM5 integrates with the STM32-based safety supervisor controller. The two systems have distinct roles: EVerest owns session logic, protocols, and energy management; the safety supervisor owns contactor control, CP/PP hardware, and fault enforcement. They communicate over CAN bus, with the safety supervisor implementing a custom EVerest Board Support Package (BSP) driver module on the CM5 side.
+This document describes how the EVerest software framework running on the Phytec SBC integrates with the STM32-based safety supervisor controller. The two systems have distinct roles: EVerest owns session logic, protocols, and energy management; the safety supervisor owns contactor control, CP/PP hardware, and fault enforcement. They communicate over CAN bus, with the safety supervisor implementing a custom EVerest Board Support Package (BSP) driver module on the Phytec SBC side.
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│                         CM5 (Linux + EVerest)                         │
+│                         Phytec SBC (Linux + EVerest)                         │
 │                                                                       │
 │  ┌──────────────┐  ┌─────────────┐  ┌──────────────┐  ┌───────────┐  │
 │  │  EvseManager │  │    Auth     │  │     OCPP     │  │  Energy   │  │
@@ -50,7 +50,7 @@ This document describes how the EVerest software framework running on the CM5 in
 
 ### 2.1 Why a Custom BSP Module
 
-EVerest's `EvseManager` does not control hardware directly. It depends on a module that implements the `evse_board_support` interface. In our design, the safety supervisor handles all low-level hardware (CP generation, contactor drivers, IMD readout), so the BSP module on the CM5 is a **CAN translator** — not a hardware driver in the traditional sense.
+EVerest's `EvseManager` does not control hardware directly. It depends on a module that implements the `evse_board_support` interface. In our design, the safety supervisor handles all low-level hardware (CP generation, contactor drivers, IMD readout), so the BSP module on the Phytec SBC is a **CAN translator** — not a hardware driver in the traditional sense.
 
 Alternatives considered:
 
@@ -58,11 +58,11 @@ Alternatives considered:
 |----------|-------------|---------|
 | `evse_board_support_API` (MQTT bridge) | Safety supervisor connects to MQTT broker directly | Adds MQTT client to safety-critical MCU; increases attack surface and complexity |
 | YetiDriver-style serial (COBS + Protobuf) | Serial link with nanopb framing | CAN preferred for noise immunity in HV cabinet; serial viable as fallback |
-| **Custom CAN BSP module** | C++ module on CM5 using SocketCAN | **Selected** — cleanest separation, leverages existing CAN #2 bus |
+| **Custom CAN BSP module** | C++ module on Phytec SBC using SocketCAN | **Selected** — cleanest separation, leverages existing CAN #2 bus |
 
 ### 2.2 Module Responsibilities Split
 
-| Function | EVerest (CM5) | Safety Supervisor (STM32) |
+| Function | EVerest (Phytec SBC) | Safety Supervisor (STM32) |
 |----------|---------------|---------------------------|
 | CP PWM generation | Sends duty cycle value | Generates 1 kHz ±12V PWM on hardware |
 | CP state detection | Receives state via CAN | Reads CP voltage, classifies A-F |
@@ -79,7 +79,7 @@ Alternatives considered:
 
 ## 3. CAN Protocol Mapping to EVerest Interfaces
 
-### 3.1 evse_board_support Commands (CM5 → STM32)
+### 3.1 evse_board_support Commands (Phytec SBC → STM32)
 
 The BSP module translates each EVerest command into a CAN frame on CAN #2.
 
@@ -94,7 +94,7 @@ The BSP module translates each EVerest command into a CAN frame on CAN #2.
 | Lock: `lock()` | `0x113` | Byte 0: 1 | Connector latch motor |
 | Lock: `unlock()` | `0x113` | Byte 0: 0 | Connector latch motor |
 
-### 3.2 evse_board_support Variables (STM32 → CM5)
+### 3.2 evse_board_support Variables (STM32 → Phytec SBC)
 
 The BSP module subscribes to CAN frames from the safety supervisor and publishes them as EVerest variables.
 
@@ -106,28 +106,28 @@ The BSP module subscribes to CAN frames from the safety supervisor and publishes
 | `0x213` | `ac_pp_ampacity` | Byte 0: PP code enum | On connector insert |
 | `0x214` | `request_stop_transaction` | Byte 0: reason enum | On physical stop button |
 
-### 3.3 isolation_monitor Interface (CM5 ↔ STM32)
+### 3.3 isolation_monitor Interface (Phytec SBC ↔ STM32)
 
 | Direction | EVerest Command/Var | CAN ID | Payload |
 |-----------|-------------------|--------|---------|
-| CM5 → STM32 | `start()` | `0x120` | Byte 0: 1 (start continuous) |
-| CM5 → STM32 | `stop()` | `0x120` | Byte 0: 0 (stop) |
-| CM5 → STM32 | `start_self_test(V)` | `0x121` | Bytes 0-1: test voltage (uint16, LE) |
-| STM32 → CM5 | `isolation_measurement` | `0x220` | Bytes 0-3: resistance (uint32, ohms); Bytes 4-5: voltage (uint16) |
-| STM32 → CM5 | `self_test_result` | `0x221` | Byte 0: 0=fail, 1=pass |
+| Phytec SBC → STM32 | `start()` | `0x120` | Byte 0: 1 (start continuous) |
+| Phytec SBC → STM32 | `stop()` | `0x120` | Byte 0: 0 (stop) |
+| Phytec SBC → STM32 | `start_self_test(V)` | `0x121` | Bytes 0-1: test voltage (uint16, LE) |
+| STM32 → Phytec SBC | `isolation_measurement` | `0x220` | Bytes 0-3: resistance (uint32, ohms); Bytes 4-5: voltage (uint16) |
+| STM32 → Phytec SBC | `self_test_result` | `0x221` | Byte 0: 0=fail, 1=pass |
 
-### 3.4 ac_rcd Interface (STM32 → CM5)
+### 3.4 ac_rcd Interface (STM32 → Phytec SBC)
 
 | Direction | EVerest Command/Var | CAN ID | Payload |
 |-----------|-------------------|--------|---------|
-| CM5 → STM32 | `self_test()` | `0x130` | Byte 0: 1 |
-| CM5 → STM32 | `reset()` | `0x130` | Byte 0: 2 |
-| STM32 → CM5 | `rcd_current_mA` | `0x230` | Bytes 0-1: current (uint16, 0.1 mA units) |
+| Phytec SBC → STM32 | `self_test()` | `0x130` | Byte 0: 1 |
+| Phytec SBC → STM32 | `reset()` | `0x130` | Byte 0: 2 |
+| STM32 → Phytec SBC | `rcd_current_mA` | `0x230` | Bytes 0-1: current (uint16, 0.1 mA units) |
 
 > [!note] RCD trip
 > The RCD trip itself is hardwired in the interlock chain and does not depend on CAN communication. The `rcd_current_mA` variable is telemetry only. If the RCD trips, the safety supervisor reports it as a fault via CAN `0x202` (Fault Detail), and the BSP module raises an `evse_board_support/MREC2GroundFailure` error in EVerest.
 
-### 3.5 Error Reporting (STM32 → CM5)
+### 3.5 Error Reporting (STM32 → Phytec SBC)
 
 The safety supervisor's fault codes map to EVerest's typed error system:
 
@@ -139,7 +139,7 @@ The safety supervisor's fault codes map to EVerest's typed error system:
 | F04: RCD trip | `0x04` | `evse_board_support/MREC2GroundFailure` | board_support |
 | F05: Contactor weld | `0x05` | `evse_board_support/PermanentFault` | board_support |
 | F06: Precharge timeout | `0x06` | `evse_board_support/PermanentFault` | board_support |
-| F07: CM5 watchdog | — | _(CM5 is down, no one to report to)_ | — |
+| F07: Phytec SBC watchdog | — | _(Phytec SBC is down, no one to report to)_ | — |
 | F08: Over-temperature | `0x08` | `evse_board_support/PermanentFault` | board_support |
 | F09: Door interlock | `0x09` | `evse_board_support/EnclosureOpen` | board_support |
 | F10: Contactor mismatch | `0x0A` | `evse_board_support/PermanentFault` | board_support |
@@ -500,7 +500,7 @@ active_modules:
 This traces a complete DC charging session through both the EVerest modules and the safety supervisor.
 
 ```
-Phase           EVerest (CM5)                    CAN Bus         Safety Supervisor (STM32)
+Phase           EVerest (Phytec SBC)                    CAN Bus         Safety Supervisor (STM32)
 ─────────────── ──────────────────────────────── ─────────────── ───────────────────────────
 
 1. EV Plugs In                                                   CP: A → B detected
@@ -568,18 +568,18 @@ Phase           EVerest (CM5)                    CAN Bus         Safety Supervis
 
 ## 7. Dual Watchdog Strategy
 
-The safety supervisor and CM5 watch each other. Failure of either side leads to a safe shutdown.
+The safety supervisor and Phytec SBC watch each other. Failure of either side leads to a safe shutdown.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                     WATCHDOG ARCHITECTURE                         │
 │                                                                  │
-│  CM5 → STM32 Watchdog (CAN 0x100):                              │
-│    CM5 sends heartbeat every 500 ms                              │
+│  Phytec SBC → STM32 Watchdog (CAN 0x100):                              │
+│    Phytec SBC sends heartbeat every 500 ms                              │
 │    STM32 expects it within 2 s                                   │
 │    Timeout → F07 → FAULT state → contactors open                 │
 │                                                                  │
-│  STM32 → CM5 Watchdog (CAN 0x200):                              │
+│  STM32 → Phytec SBC Watchdog (CAN 0x200):                              │
 │    STM32 sends Safety Status every 100 ms                        │
 │    BSP module expects response within 2 s                        │
 │    Timeout → raise CommunicationFault                            │
@@ -602,7 +602,7 @@ This table clarifies the hard boundary between EVerest and the safety supervisor
 | **EVerest must never bypass the safety supervisor** | All power path commands go through `allow_power_on`, which the supervisor can reject |
 | **Safety supervisor must never run session logic** | Session state, auth, billing, and protocol handling belong to EVerest; the supervisor only validates physical preconditions |
 | **Safety supervisor must never depend on CAN for shutdown** | Emergency stop and hardware faults use the hardwired interlock chain (Layer 1), not CAN messages |
-| **IMD/RCD trip relays must be hardwired in series with contactors** | Software monitoring is supplementary; the physical failsafe is independent of both CM5 and STM32 |
+| **IMD/RCD trip relays must be hardwired in series with contactors** | Software monitoring is supplementary; the physical failsafe is independent of both Phytec SBC and STM32 |
 
 ## 9. Testing Strategy
 
@@ -613,7 +613,7 @@ This table clarifies the hard boundary between EVerest and the safety supervisor
 | CP state transitions | Inject resistor network on CP line | BSP publishes correct A-F events |
 | Contactor sequencing | Monitor contactor coils via scope | Correct sequence and timing |
 | IMD self-test | Inject known resistance to IMD | `self_test_result = true` propagated |
-| Watchdog (CM5 side) | Kill EVerest process | STM32 enters FAULT within 2 s |
+| Watchdog (Phytec SBC side) | Kill EVerest process | STM32 enters FAULT within 2 s |
 | Watchdog (STM32 side) | Disconnect CAN from STM32 | BSP raises CommunicationFault |
 | E-STOP | Press E-STOP during charging | All contactors open within 1 ms |
 | Fault propagation | Trigger IMD fault | EvseManager enters error, OCPP reports |
@@ -652,4 +652,4 @@ active_modules:
 - [[02 - Communication Protocols]] — CAN bus topology and wiring
 - [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]] — EVerest interface specifications and driver patterns
 - [[research/01 - Safety Philosophy|01 - Safety Philosophy]] — Hardware interlock chain design
-- [[research/02 - CM5 based Main Controller|02 - CM5 based Main Controller]] — CM5 hardware and EVSE aux board
+- [[research/02 - Phytec SBC based Main Controller|02 - Phytec SBC based Main Controller]] — Phytec SBC hardware and EVSE aux board
