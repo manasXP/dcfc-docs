@@ -5,7 +5,10 @@ created: 2026-02-26
 
 # Phytec SBC Replacement for CM5 Main Controller
 
-This note evaluates **Phytec System-on-Modules (SOMs)** as an industrial-grade replacement for the current [[02 - CM5 based Main Controller|Raspberry Pi CM5]] used as the DCFC main controller running Linux + EVerest.
+> [!success] Decision: phyCORE-AM62x selected
+> The **Phytec phyCORE-AM62x** has been selected as the DCFC main controller, replacing the Raspberry Pi CM5. All system documentation has been updated to reflect this change.
+
+This note evaluates **Phytec System-on-Modules (SOMs)** as an industrial-grade replacement for the original [[02 - CM5 based Main Controller|Raspberry Pi CM5]] used as the DCFC main controller running Linux + EVerest.
 
 ## 1. Why Replace the CM5
 

@@ -457,20 +457,20 @@ From PDU 3 (24V DC Bus)
 #### Configuration B: 230V AC HVAC (5–20 kW cooling capacity)
 
 ```
-From Backplane Tap (L1-N, via dedicated HVAC breaker)
+From Backplane Tap (L1-L2, via dedicated HVAC breaker)
 │
-├─── 230V AC (MCB 16A for 9 kW unit / 32A for 20 kW unit)
+├─── 400V AC L-L (MCB 10A for 9 kW unit / 16A for 20 kW unit)
 │    │
 │    ├─── Compressor Inverter Drive
-│    │    Input: 230V AC, 1-phase
+│    │    Input: 400V AC, single-phase (L-L)
 │    │    Output: 3-phase variable frequency to scroll compressor
-│    │    Max input current: 13A (9 kW) / 30A (20 kW)
+│    │    Max input current: 7A (9 kW) / 15A (20 kW)
 │    │
 │    ├─── PTC Heater Element (optional, cold climate)
-│    │    Rating: 500W–1 kW, 230V AC
+│    │    Rating: 500W–1 kW, 400V AC
 │    │    Switched by HVAC controller relay
 │    │
-│    └─── Internal buck converter: 230V AC → 24V DC, 2A
+│    └─── Internal buck converter: 400V AC → 24V DC, 2A
 │         Powers: controller MCU, fan motors, EEV stepper, sensors
 │
 ├─── 24V DC (from PDU 3, via clip-on connector)

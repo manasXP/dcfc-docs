@@ -105,7 +105,7 @@ When the charger has two CCS connectors sharing a common power stack (power-shar
               │      CHARGER NODE (Internal)       │
               │                                   │
               │  Total power shelf: 150 kW        │
-              │  (6× 25 kW modules)               │
+              │  (5× 30 kW modules)               │
               │  + auxiliary loads: ~5 kW          │
               └──────────┬────────┬──────────────┘
                          │        │
@@ -139,9 +139,9 @@ description: >
   then enforces limits on connected EvseManagers.
 config:
   nominal_ac_voltage:
-    description: Nominal AC line-to-neutral voltage for power calculation
+    description: Nominal AC line-to-line voltage for power calculation (3-wire system, no neutral)
     type: number
-    default: 230.0
+    default: 400.0
   update_interval:
     description: Period (ms) to re-evaluate and publish energy limits
     type: integer
@@ -312,7 +312,7 @@ Example scenario:
 
 ```
   EV requests:          150 kW (ISO 15118)
-  Hardware capability:  150 kW (6× 25 kW modules)
+  Hardware capability:  150 kW (5× 30 kW modules)
   Site fuse:            200 kW
   Auxiliary load:       5 kW (HVAC 3 kW + controls 2 kW)
   OCPP schedule:        100 kW (demand response event)
@@ -512,13 +512,13 @@ EvseManager: setExportVoltageCurrent(800V, 93.75A)
     ▼
 PowerModuleDriver:
   total_demand = 93.75A
-  per_module_max = 62.5A
-  modules_needed = ceil(93.75 / 62.5) = 2  (+ 1 redundant)
-  active = 3, standby = 3
+  per_module_max = 75.0A
+  modules_needed = ceil(93.75 / 75.0) = 2
+  active = 2, standby = 3
 
-  → 3 modules active at 31.25A each (50% load → peak efficiency ~97%)
+  → 2 modules active at 46.88A each (63% load → near peak efficiency ~97%)
   → 3 modules in standby (fans off, no switching losses)
-  → Saves ~1.5 kW in losses vs. running all 6 at 25% load
+  → Saves ~1.2 kW in losses vs. running all 5 at 25% load
 ```
 
 ## 10. YAML Configuration
@@ -691,7 +691,7 @@ PRE-CHARGE           enforce_limits: low current            Voltage ramp
                      (2A × target_V)
 
 CHARGING             enforce_limits calculated:             Full power
-                     min(EV_demand, site_budget,            (6 modules active)
+                     min(EV_demand, site_budget,            (5 modules active)
                          OCPP_schedule, thermal_derate)
 
 TAPER                EV reduces demand → EvseManager        Modules shed

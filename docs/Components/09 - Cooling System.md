@@ -34,5 +34,5 @@ The cooling system manages thermal loads from the power modules, contactors, and
 - The coolant loop serves power module coldplates (3–5 L/min per module) and the liquid-cooled CCS cable
 - Total flow rate: 10–30 L/min depending on power level and number of active modules
 - Target coolant temperature: 30–45°C inlet; max 60°C outlet
-- Heat dissipation: ~1 kW per 25 kW module (at 96% efficiency) = ~6 kW for 150 kW configuration
+- Heat dissipation: ~1.2 kW per 30 kW module (at 96% efficiency) = ~6 kW for 150 kW configuration (5 modules)
 - Temperature sensors on coolant lines provide input to the EVerest HVAC driver for thermal management

@@ -18,27 +18,27 @@ This document provides a consolidated cost estimate for all major component grou
 | 4 | [[docs/Components/04 - Power Modules\|Power Modules]] (5× 30 kW PDU-Micro) | SiC converters, PCBs, backplane, wiring | $10,087 | $8,070 |
 | 5 | [[docs/Components/05 - DC Output Protection\|DC Output Protection]] | Contactors, breaker, fuses, sensors | $1,785 | $1,785 |
 | 6 | [[docs/Components/06 - CCS Connector and Cable Assembly\|CCS Connector and Cable]] | Liquid-cooled CCS2 connector + 5 m cable | $2,180 | $2,180 |
-| 7 | [[docs/Components/07 - AC Input and Protection\|AC Input and Protection]] | Breakers, contactors, SPD, meter, busbars, PDUs | $1,496 | $1,496 |
-| 8 | [[docs/Components/08 - Auxiliary Power Supply\|Auxiliary Power Supply]] | SMPS (×2), DC-DC, UPS batteries | $150 | $150 |
+| 7 | [[docs/Components/07 - AC Input and Protection\|AC Input and Protection]] | Breakers, contactors, SPD, meter, busbars, PDUs | $1,467 | $1,467 |
+| 8 | [[docs/Components/08 - Auxiliary Power Supply\|Auxiliary Power Supply]] | SMPS (×2), DC-DC, UPS batteries | $200 | $200 |
 | 9 | [[docs/Components/09 - Cooling System\|Cooling System]] | Pump, radiator, fans, sensors, coolant | $635 | $635 |
 | 10 | [[docs/Components/10 - HVAC Clip-On Unit\|HVAC Clip-On Unit]] | Refrigeration, blowers, controller, enclosure | $1,720 | $1,720 |
-| 11 | [[docs/Components/11 - Cabinet and Enclosure\|Cabinet and Enclosure]] | Main cabinet, mounting, cable management | $2,145 | $2,145 |
-| | **TOTAL (150 kW, single connector)** | | **$21,503** | **$19,486** |
+| 11 | [[docs/Components/11 - Cabinet and Enclosure\|Cabinet and Enclosure]] | Main cabinet, mounting, cable management | $2,115 | $2,115 |
+| | **TOTAL (150 kW, single connector)** | | **$21,494** | **$19,477** |
 
 ## 3. Cost Visualization (@100 units)
 
 ```
 Power Modules (5×30 kW)      █████████████████████████████████  $10,087  (46.9%)
 CCS Connector + Cable         ██████████                         $2,180   (10.1%)
-Cabinet and Enclosure         ██████████                         $2,145   (10.0%)
+Cabinet and Enclosure         ██████████                         $2,115   (9.8%)
 DC Output Protection           ████████                          $1,785   (8.3%)
 HVAC Clip-On Unit             ████████                          $1,720   (8.0%)
-AC Input and Protection       ███████                           $1,496   (7.0%)
+AC Input and Protection       ███████                           $1,467   (6.8%)
 Control Electronics           ████                              $730     (3.4%)
-Cooling System                ███                               $635     (3.0%)
+Cooling System                ███                               $635     (2.9%)
 Networking + Communication    ██                                $375     (1.7%)
 User Interface                █                                 $200     (0.9%)
-Auxiliary Power Supply        █                                 $150     (0.7%)
+Auxiliary Power Supply        █                                 $200     (0.9%)
 ```
 
 ## 4. Power Module Cost Breakdown
@@ -60,7 +60,7 @@ Top cost drivers per module: DAB SiC MOSFETs (23%), Vienna PFC module (13.3%), P
 
 | Configuration | Change from Base | @100 (USD) | @500 (USD) |
 |---------------|-----------------|-----------|-----------|
-| 150 kW, single CCS2 connector | Base | **$21,503** | **$19,486** |
+| 150 kW, single CCS2 connector | Base | **$21,494** | **$19,477** |
 | 150 kW, dual connector (CCS2 + CCS2) | +1× cable assembly, +1× contactor set, +1× PLC | ~$25,700 | ~$23,700 |
 | 300 kW, single connector | +5 power modules, larger breakers/busbars, larger HVAC | ~$32,900 | ~$28,900 |
 | 350 kW, dual connector | Full configuration | ~$36,900 | ~$32,900 |
@@ -93,6 +93,7 @@ Top cost drivers per module: DAB SiC MOSFETs (23%), Vienna PFC module (13.3%), P
 - Commercial 150 kW DC fast chargers retail for $30,000–$60,000 depending on brand, features, and region
 - The estimated BOM cost of ~$21,500 @100 (without labor, installation, or margin) represents strong cost competitiveness
 - At 500-unit volume (~$19,500), the BOM supports a competitive retail price point with healthy margins
+- Note: 3-phase SMPS (DRT-240-24) is slightly more expensive than single-phase, but eliminates neutral busbar and simplifies wiring
 
 ## 7. References
 

@@ -25,7 +25,7 @@ The power modules are the core energy conversion elements of the DCFC. Each 30 k
 |------|-----|---------------|
 | PFC boost inductor | 3 | 200–400 µH, 50A, nanocrystalline core, Litz wire |
 | LLC resonant inductor | 1 | 10–30 µH (may be integrated in transformer) |
-| HF transformer | 1 | 25 kW, 80–300 kHz, ferrite/nanocrystalline, 4 kV isolation |
+| HF transformer | 1 | 30 kW, 80–300 kHz, ferrite/nanocrystalline, 4 kV isolation |
 | CM choke (EMI filter) | 2 | 2–5 mH, nanocrystalline toroid |
 
 ### 2.3 Capacitors
@@ -59,8 +59,8 @@ The power modules are the core energy conversion elements of the DCFC. Each 30 k
 | Module enclosure (top cover) | 1 | Sheet aluminum, powder-coated |
 | Axial fan (80mm) | 1 | 24V DC, 50 CFM, PWM |
 | Coolant fittings (10mm push-in) | 2 | Quick-disconnect |
-| Input fuse holder + fuses | 1 set | 3-pole, 50A gG |
-| AC terminal block | 1 | 4-position (L1, L2, L3, PE), 50A rated |
+| Input fuse holder + fuses | 1 set | 3-pole, 63A gG |
+| AC terminal block | 1 | 4-position (L1, L2, L3, PE), 63A rated |
 | DC terminal block | 1 | 2-position (DC+, DC-), 70A rated |
 | CAN connectors | 2 | RJ45 or 4-pin Molex |
 | ENABLE connector | 1 | 2-pin Molex or JST |

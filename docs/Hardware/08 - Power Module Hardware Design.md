@@ -6,7 +6,7 @@ Related: [[01 - Hardware Components]] | [[02 - Electric Wiring Diagram]] | [[03 
 
 ## 1. Overview
 
-The power module is the core energy conversion element of the DCFC. Each module is a self-contained 25 kW AC-to-DC converter that takes 3-phase AC grid power and produces a regulated, isolated DC output suitable for EV battery charging. Multiple modules are connected in parallel on a shared DC output bus to scale the charger's total power — six modules for 150 kW, twelve for 300 kW, with one additional module for N+1 redundancy.
+The power module is the core energy conversion element of the DCFC. Each module is a self-contained 30 kW AC-to-DC converter that takes 3-phase AC grid power and produces a regulated, isolated DC output suitable for EV battery charging. Multiple modules are connected in parallel on a shared DC output bus to scale the charger's total power — five modules for 150 kW, ten for 300 kW.
 
 Each module contains two conversion stages:
 1. **PFC Stage** (AC → DC link) — A Vienna rectifier that converts 3-phase AC to a stable ~800V DC link while maintaining >0.99 power factor and <5% THD
@@ -18,7 +18,7 @@ The module includes its own DSP controller, gate drivers, sensors, protection ci
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│                           25 kW POWER MODULE                                     │
+│                           30 kW POWER MODULE                                     │
 │                                                                                  │
 │  AC INPUT                                                              DC OUTPUT │
 │  3-Phase    ┌─────┐   ┌──────────────────────┐   ┌─────┐              200-1000V │
@@ -70,19 +70,19 @@ The module includes its own DSP controller, gate drivers, sensors, protection ci
 |-----------|-------|-------|
 | Input voltage | 3-phase 400–480V AC ±10% | 360–528V operating range |
 | Frequency | 50/60 Hz ±5% | Auto-detecting |
-| Input current (per phase) | 42A RMS at 400V / 35A RMS at 480V | At 25 kW full load |
+| Input current (per phase) | 52A RMS at 400V / 42A RMS at 480V | At 30 kW full load |
 | Power factor | >0.99 at >50% load | Vienna PFC topology |
 | THD (current) | <5% at rated load | IEC 61000-3-12 compliant |
 | Inrush current | <20A peak (soft-start via PFC) | NTC + relay bypass |
-| Input fusing | Internal 50A gG per phase | 3-pole fuse holder |
+| Input fusing | Internal 63A gG per phase | 3-pole fuse holder |
 
 ### 3.2 Output Specifications
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
 | Output voltage range | 200–1000V DC | Continuous adjustment via LLC |
-| Maximum output current | 62.5A at 400V / 25A at 1000V | Power-limited to 25 kW |
-| Rated output power | 25 kW | Continuous at all voltages within P=V×I envelope |
+| Maximum output current | 75A at 400V / 30A at 1000V | Power-limited to 30 kW |
+| Rated output power | 30 kW | Continuous at all voltages within P=V×I envelope |
 | Voltage regulation accuracy | ±0.5% of setpoint | Under steady-state load |
 | Current regulation accuracy | ±1% of setpoint | Under steady-state operation |
 | Voltage ripple (peak-to-peak) | <1% of V_out | At rated load, 200 kHz bandwidth |
@@ -96,60 +96,59 @@ The module includes its own DSP controller, gate drivers, sensors, protection ci
 ```
 Output Current (A)
 │
-│ 125 ┤ ........
+│ 150 ┤ ........
 │     │ .       .
 │     │ .        .         POWER LIMIT BOUNDARY
-│ 100 ┤ .         .        P = 25 kW
+│ 125 ┤ .         .        P = 30 kW
 │     │ .          .
-│     │ .           .
-│  75 ┤ .            .
-│     │ .             .
-│     │ .              .
-│  50 ┤ .               .
-│     │ .                .
-│     │ .                 ............
-│  25 ┤ .                             .
+│ 100 ┤ .           .
+│     │ .            .
+│  75 ┤ .             .......
+│     │ .                    .
+│  50 ┤ .                     .
+│     │ .                      .
+│  25 ┤ .                       ........
 │     │ .                              .
 │   0 ┤─┴──────┬──────┬──────┬──────┬──┴──
 │     200    400    600    800   1000
 │                Output Voltage (V)
 
-At 200V: I_max = 25000/200 = 125A (but capped at 62.5A by module rating)
-At 400V: I_max = 25000/400 = 62.5A (module max current)
-At 600V: I_max = 25000/600 = 41.7A
-At 800V: I_max = 25000/800 = 31.3A
-At 1000V: I_max = 25000/1000 = 25.0A
+At 200V: I_max = 30000/200 = 150A (but capped at 75A by module rating)
+At 400V: I_max = 30000/400 = 75.0A (module max current)
+At 600V: I_max = 30000/600 = 50.0A
+At 800V: I_max = 30000/800 = 37.5A
+At 1000V: I_max = 30000/1000 = 30.0A
 
-NOTE: Below 400V, output is current-limited to 62.5A,
-      so actual power = V × 62.5A (e.g., 200V × 62.5A = 12.5 kW)
+NOTE: Below 400V, output is current-limited to 75A,
+      so actual power = V × 75A (e.g., 200V × 75A = 15 kW)
 ```
 
 ### 3.4 Efficiency
 
 | Load | Efficiency | Notes |
 |------|-----------|-------|
-| 10% (2.5 kW) | >92% | Switching losses dominate |
-| 25% (6.25 kW) | >95% | |
-| 50% (12.5 kW) | >96.5% | Near-optimal operating point |
-| 75% (18.75 kW) | >97% | Peak efficiency zone |
-| 100% (25 kW) | >96% | Conduction losses increase |
+| 10% (3 kW) | >92% | Switching losses dominate |
+| 25% (7.5 kW) | >95% | |
+| 50% (15 kW) | >96.5% | Near-optimal operating point |
+| 75% (22.5 kW) | >97% | Peak efficiency zone |
+| 100% (30 kW) | >96% | Conduction losses increase |
 
 Peak efficiency of ~97% occurs at 70–80% load, which is typical during the constant-current phase of EV charging. The module is optimized for this operating point.
 
-**Loss breakdown at 25 kW (96% efficiency = 1 kW losses):**
+**Loss breakdown at 30 kW (96% efficiency = 1.2 kW losses):**
 
 | Loss Source | Estimated Loss | Percentage |
 |-------------|---------------|------------|
-| PFC SiC MOSFET switching | 200W | 20% |
-| PFC SiC MOSFET conduction | 100W | 10% |
-| PFC boost inductor core + copper | 150W | 15% |
-| DC-DC SiC MOSFET switching | 150W | 15% |
-| DC-DC SiC MOSFET conduction | 80W | 8% |
-| HF transformer core + copper | 150W | 15% |
-| Output rectifier conduction | 100W | 10% |
-| Gate drivers + control circuits | 30W | 3% |
-| EMI filter + misc | 40W | 4% |
-| **Total** | **~1000W** | **100%** |
+| PFC SiC MOSFET switching | 240W | 20% |
+| PFC SiC MOSFET conduction | 120W | 10% |
+| PFC boost inductor core + copper | 180W | 15% |
+| DC-DC SiC MOSFET switching | 180W | 15% |
+| DC-DC SiC MOSFET conduction | 96W | 8% |
+| HF transformer core + copper | 180W | 15% |
+| Output rectifier conduction | 120W | 10% |
+| Gate drivers + control circuits | 36W | 3% |
+| EMI filter + misc | 48W | 4% |
+| **Total** | **~1200W** | **100%** |
 
 ## 4. PFC Stage — Vienna Rectifier
 
@@ -185,7 +184,7 @@ The Vienna rectifier is a three-level, three-phase boost PFC topology that achie
         (+800V)    (1000µF)        (0V)           (1000µF)       (0V)
 
     Total DC Link Voltage: ~800V (at 400V AC input)
-    DC Link ripple: ~20V peak-to-peak at 25 kW
+    DC Link ripple: ~24V peak-to-peak at 30 kW
 ```
 
 ### 4.2 Vienna Rectifier Advantages
@@ -357,11 +356,11 @@ The LLC resonant converter is a half-bridge or full-bridge topology that achieve
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| Power rating | 25 kW | With derating for core temperature |
+| Power rating | 30 kW | With derating for core temperature |
 | Operating frequency | 80–300 kHz | Designed for resonant frequency |
 | Turns ratio (Np:Ns) | Optimized for 800V input → 200–1000V output | Typically ~1:1 to 1:1.3 |
 | Core material | Ferrite (N87, N97, or equivalent) or nanocrystalline | Low core loss at 100+ kHz |
-| Core geometry | EE, ETD, or toroidal | ETD59 or custom for 25 kW |
+| Core geometry | EE, ETD, or toroidal | ETD59 or custom for 30 kW |
 | Winding | Primary: Litz wire; Secondary: Litz wire or copper foil | Minimize skin/proximity effect |
 | Insulation | Triple-insulated wire (TIW) or bobbin with 8 mm creepage | 4 kV isolation requirement |
 | Temperature rise | <50°C above ambient at rated load | With thermal management |
@@ -543,18 +542,18 @@ Total auxiliary power consumption: ~45W (from 24V input).
 
 ### 8.1 Heat Dissipation
 
-At 25 kW output and 96% efficiency, the module dissipates ~1 kW of heat. This heat is concentrated in the switching devices, magnetic components, and rectifiers.
+At 30 kW output and 96% efficiency, the module dissipates ~1.2 kW of heat. This heat is concentrated in the switching devices, magnetic components, and rectifiers.
 
 | Component | Heat Source | Dissipation (W) | Cooling Method |
 |-----------|-----------|-----------------|----------------|
-| PFC SiC MOSFETs (×6) | Switching + conduction | 300 | Coldplate (liquid) |
-| LLC SiC MOSFETs (×4) | Switching + conduction | 230 | Coldplate (liquid) |
-| Output rectifier diodes (×2–4) | Forward voltage drop | 100 | Coldplate (liquid) |
-| Boost inductors (×3) | Core + copper loss | 150 | Thermal pad to baseplate |
-| HF Transformer | Core + copper loss | 150 | Thermal pad to baseplate |
-| DC link capacitors | ESR × I²_ripple | 30 | Ambient air + conduction |
-| Controller / gate drivers | Logic dissipation | 40 | PCB copper pour + air |
-| **Total** | | **~1000W** | |
+| PFC SiC MOSFETs (×6) | Switching + conduction | 360 | Coldplate (liquid) |
+| LLC SiC MOSFETs (×4) | Switching + conduction | 276 | Coldplate (liquid) |
+| Output rectifier diodes (×2–4) | Forward voltage drop | 120 | Coldplate (liquid) |
+| Boost inductors (×3) | Core + copper loss | 180 | Thermal pad to baseplate |
+| HF Transformer | Core + copper loss | 180 | Thermal pad to baseplate |
+| DC link capacitors | ESR × I²_ripple | 36 | Ambient air + conduction |
+| Controller / gate drivers | Logic dissipation | 48 | PCB copper pour + air |
+| **Total** | | **~1200W** | |
 
 ### 8.2 Coldplate Design
 
@@ -706,7 +705,7 @@ POWER SHELF (Top View, 4 Modules)
     │                                                                    │
     │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
     │  │Module 1  │  │Module 2  │  │Module 3  │  │Module 4  │          │
-    │  │  25 kW   │  │  25 kW   │  │  25 kW   │  │  25 kW   │          │
+    │  │  30 kW   │  │  30 kW   │  │  30 kW   │  │  30 kW   │          │
     │  │          │  │          │  │          │  │          │          │
     │  │   FRONT  │  │   FRONT  │  │   FRONT  │  │   FRONT  │          │
     │  │  (CAN,   │  │  (CAN,   │  │  (CAN,   │  │  (CAN,   │  ← Service
@@ -796,7 +795,7 @@ Each module has an input EMI filter to meet conducted emission limits per IEC 61
 |------|-----|---------------|
 | PFC boost inductor | 3 | 200–400 µH, 50A, nanocrystalline core, Litz wire |
 | LLC resonant inductor | 1 | 10–30 µH (may be integrated in transformer) |
-| HF transformer | 1 | 25 kW, 80–300 kHz, ferrite/nanocrystalline, 4 kV isolation |
+| HF transformer | 1 | 30 kW, 80–300 kHz, ferrite/nanocrystalline, 4 kV isolation |
 | CM choke (EMI filter) | 2 | 2–5 mH, nanocrystalline toroid |
 
 ### 12.3 Capacitors
@@ -831,8 +830,8 @@ Each module has an input EMI filter to meet conducted emission limits per IEC 61
 | Module enclosure (top cover) | 1 | Sheet aluminum, powder-coated |
 | Axial fan (80mm) | 1 | 24V DC, 50 CFM, PWM, tachometer |
 | Coolant fittings (10mm push-in) | 2 | Quick-disconnect |
-| Input fuse holder + fuses | 1 set | 3-pole, 50A gG |
-| AC terminal block | 1 | 4-position (L1, L2, L3, PE), 50A rated |
+| Input fuse holder + fuses | 1 set | 3-pole, 63A gG |
+| AC terminal block | 1 | 4-position (L1, L2, L3, PE), 63A rated |
 | DC terminal block | 1 | 2-position (DC+, DC-), 70A rated |
 | CAN connectors | 2 | RJ45 or 4-pin Molex |
 | ENABLE connector | 1 | 2-pin Molex or JST |
@@ -901,11 +900,11 @@ Key timing constraints:
 
 | Test | Method | Pass Criteria |
 |------|--------|---------------|
-| Full-power burn-in | 25 kW at 400V/62.5A, 48 hours continuous | No fault, temp stable within ±5°C |
+| Full-power burn-in | 30 kW at 400V/75A, 48 hours continuous | No fault, temp stable within ±5°C |
 | Efficiency test | Power analyzer at 10%, 25%, 50%, 75%, 100% load | Meets spec per Section 3.4 |
 | Power factor / THD | Power analyzer at rated load | PF >0.99, THD <5% |
 | Voltage regulation | Load step 25% → 100% → 25% | ±0.5%, <5% overshoot |
-| Current sharing | 6 modules in parallel, measure current spread | <5% imbalance at rated load |
+| Current sharing | 5 modules in parallel, measure current spread | <5% imbalance at rated load |
 | Over-temperature shutdown | Block coolant flow, monitor response | Shutdown before T_junction >175°C |
 | OVP / OCP | Inject fault via external load | Trip within spec, no damage |
 | Insulation test | 4 kV DC, 60 s, input to output | No breakdown, leakage <1 mA |
@@ -918,7 +917,7 @@ Key timing constraints:
 
 | Step | Condition | Verification |
 |------|-----------|--------------|
-| 1 | 5 modules charging at 125 kW (5 × 25 kW) | Stable operation |
+| 1 | 5 modules charging at 150 kW (5 × 30 kW) | Stable operation |
 | 2 | Disconnect Module 3 (pull from shelf) | Remaining 4 modules absorb load within 200 ms |
 | 3 | Insert replacement Module 3 | Module detected via heartbeat, enters standby |
 | 4 | Phytec SBC enables replacement module | Current redistributed across 5 modules |
@@ -942,6 +941,6 @@ Key timing constraints:
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-02-26
+**Document Version**: 1.1
+**Last Updated**: 2026-02-27
 **Prepared by**: Power Electronics Engineering

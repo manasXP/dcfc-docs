@@ -16,7 +16,7 @@ Build a complete 150 kW CCS2 DC fast charger from the following in-house and ope
 | Cabinet, backplane, contactors | In-house design | Documentation complete, hardware pending |
 | Safety Supervisor (STM32) | In-house firmware | Specification complete, firmware pending |
 | HVAC Clip-On Unit | In-house design | Specification complete, hardware pending |
-| Main Controller (CM5 + EVerest) | CM5 hardware + open-source EVerest | Research complete, integration pending |
+| Main Controller (Phytec phyCORE-AM62x + EVerest) | Phytec phyCORE-AM62x + open-source EVerest | Research complete, integration pending |
 | CCS2 Connector + liquid-cooled cable | Commercial COTS | Specification complete |
 
 **System Configuration:** 5x PDU-Micro modules (30 kW each) = 150 kW, with N+1 redundancy optional.
@@ -44,7 +44,7 @@ The DCFC documentation was originally written assuming 6x 25 kW modules with LLC
 | Module efficiency | Peak 97% | Peak 96.3% (system) |
 | DC bus voltage | 800 VDC fixed | 700--920 VDC (adaptive) |
 
-**Action required:** Update DCFC system docs to reflect PDU-Micro specifications. CAN protocol between CM5 and modules must bridge CAN-FD (PDU-Micro native) to the CM5's CAN adapter.
+**Action required:** Update DCFC system docs to reflect PDU-Micro specifications. CAN protocol between main controller and modules uses native CAN-FD (both PDU-Micro and phyCORE-AM62x support CAN-FD natively).
 
 ### 2.2 CAN Protocol Reconciliation
 
@@ -53,35 +53,35 @@ The PDU-Micro defines its own CAN-FD protocol (`pdu_can_protocol.h`) with:
 - Inter-module: MODULE_STATUS / MASTER_CMD / MASTER_ANNOUNCE at 100 Hz
 - Module master election (lowest Module ID PFC PIM)
 
-The DCFC's CM5 `PowerModuleDriver` EVerest module expects a different protocol on CAN #1:
-- Setpoint messages (0x010--0x01F) from CM5
+The DCFC's `PowerModuleDriver` EVerest module expects a different protocol on CAN #1:
+- Setpoint messages (0x010--0x01F) from main controller
 - Status/telemetry/fault messages (0x110--0x3CF) from modules
 - CANopen NMT heartbeat (0x700+)
 
 **Resolution options:**
-- **Option A (recommended):** The PDU-Micro's PFC PIM master handles inter-module coordination (current sharing, stacking) autonomously. CM5 sends high-level setpoints (voltage, total current limit, enable/disable) to the elected module master only. The master distributes to slaves. This leverages the existing PDU-Micro droop-based current sharing.
-- **Option B:** CM5 addresses each module individually (as in original DCFC spec). Requires disabling PDU-Micro's internal master election and current distribution. More CM5 software complexity.
+- **Option A (recommended):** The PDU-Micro's PFC PIM master handles inter-module coordination (current sharing, stacking) autonomously. Main controller sends high-level setpoints (voltage, total current limit, enable/disable) to the elected module master only. The master distributes to slaves. This leverages the existing PDU-Micro droop-based current sharing.
+- **Option B:** Main controller addresses each module individually (as in original DCFC spec). Requires disabling PDU-Micro's internal master election and current distribution. More software complexity.
 
 ### 2.3 Revised System Block Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  CM5 Main Controller (Linux + EVerest)                      │
-│  ┌──────────┐ ┌──────────┐ ┌──────┐ ┌──────┐ ┌──────────┐  │
-│  │EvseManager│ │EnergyMgr │ │OCPP  │ │Auth  │ │EvseV2G   │  │
-│  └────┬─────┘ └────┬─────┘ └──┬───┘ └──┬───┘ └────┬─────┘  │
-│       │             │          │        │          │         │
-│  ┌────┴────┐  ┌─────┴─────┐                  ┌────┴────┐    │
-│  │SafetyBSP│  │PowerModule│                  │EvseSlac │    │
-│  │ Driver  │  │  Driver   │                  └─────────┘    │
-│  └────┬────┘  └─────┬─────┘  ┌──────────┐                  │
-│       │              │        │HvacDriver│                  │
-│       │              │        └────┬─────┘                  │
-└───────┼──────────────┼─────────────┼────────────────────────┘
-        │              │             │
+│  Phytec phyCORE-AM62x Main Controller (Linux + EVerest)     │
+│  ┌──────────┐  ┌──────────┐ ┌──────┐ ┌──────┐ ┌──────────┐  │
+│  │EvseManager  │EnergyMgr │ │OCPP  │ │Auth  │ │EvseV2G   │  │
+│  └────┬─────┘  └────┬─────┘ └──┬───┘ └──┬───┘ └────┬─────┘  │
+│       │             │          │        │          │        │
+│  ┌────┴────┐  ┌─────┴─────┐                   ┌────┴────┐   │
+│  │SafetyBSP│  │PowerModule│                   │EvseSlac │   │
+│  │ Driver  │  │  Driver   │                   └─────────┘   │
+│  └────┬────┘  └─────┬─────┘  ┌──────────┐                   │
+│       │             │        │HvacDriver│                   │ 
+│       │             │        └────┬─────┘                   │
+└───────┼─────────────┼─────────────┼─────────────────────────┘
+        │             │             │
    CAN #2 (500k)  CAN #1 (CAN-FD)  CAN #3 (250k)
-        │              │             │
-   ┌────┴────┐    ┌────┴────┐   ┌───┴───┐
+        │             │             │
+   ┌────┴────┐    ┌───┴─────┐   ┌───┴───┐
    │ Safety  │    │PDU-Micro│   │ HVAC  │
    │  Supv.  │    │ Master  │   │ Unit  │
    │ (STM32) │    │(Module 0│   │(STM32/│
@@ -121,7 +121,7 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 | 1.9 | Light-load pulse-skipping and module shedding | Medium | EP-06 |
 | 1.10 | DPS/TPS modulation (advanced DAB efficiency improvement) | Low | EP-06 |
 
-**Interface to DCFC:** The module master's CAN-FD interface must support the following commands from CM5:
+**Interface to DCFC:** The module master's CAN-FD interface must support the following commands from the main controller:
 - Set target voltage (0--1000 V)
 - Set total current limit (0--500 A)
 - Enable / Disable / Emergency stop
@@ -134,11 +134,11 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 
 | # | Task | Priority | Notes |
 |---|------|----------|-------|
-| 2.1 | Define CM5-to-ModuleMaster CAN message set | Critical | Simplify DCFC CAN #1 spec to high-level setpoints only (Option A) |
-| 2.2 | Implement CM5-side CAN-FD adapter configuration | High | Waveshare isolated CAN module must support CAN-FD; verify or replace with compatible adapter |
-| 2.3 | Add CM5-facing CAN responder in PDU-Micro PFC PIM master firmware | Critical | New CAN message handler alongside existing inter-module protocol |
-| 2.4 | Define shared `dcfc_can_protocol.h` header | High | Message IDs, signal definitions, scaling, DLC for both CM5 driver and module master |
-| 2.5 | Bench test: CM5 SocketCAN <-> Module Master CAN-FD loopback | High | Verify round-trip latency < 5 ms |
+| 2.1 | Define MainController-to-ModuleMaster CAN message set | Critical | Simplify DCFC CAN #1 spec to high-level setpoints only (Option A) |
+| 2.2 | Configure phyCORE-AM62x native CAN-FD interfaces | High | 3x native CAN-FD on AM62x SoC; no external adapter needed |
+| 2.3 | Add main-controller-facing CAN responder in PDU-Micro PFC PIM master firmware | Critical | New CAN message handler alongside existing inter-module protocol |
+| 2.4 | Define shared `dcfc_can_protocol.h` header | High | Message IDs, signal definitions, scaling, DLC for both EVerest driver and module master |
+| 2.5 | Bench test: phyCORE-AM62x SocketCAN <-> Module Master CAN-FD loopback | High | Verify round-trip latency < 5 ms |
 
 ### WS-3: Safety Supervisor Firmware (STM32)
 > **Owner:** Firmware team (safety-critical, MISRA C)
@@ -152,11 +152,11 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 | 3.3 | Hardware interlock chain integration (E-STOP, door, IMD relay, RCD, thermal) | Critical | Wire safety loop through NC contacts in series |
 | 3.4 | Safety state machine: INIT -> IDLE -> AC_CLOSE -> PRECHARGE -> DC_CLOSE -> CHARGING -> SHUTDOWN -> FAULT | Critical | 8 states per spec |
 | 3.5 | Contactor sequencing: AC contactor -> pre-charge (K4+R1) -> main DC (K2/K3) -> K4 open | Critical | dV/dt monitoring during pre-charge; 3 s timeout |
-| 3.6 | Independent OVP/OCP via dedicated ADC (not trusting CM5 or module values) | Critical | Hardware comparator for < 1 us OVP |
-| 3.7 | CM5 heartbeat monitoring: CAN #2, 500 ms period, 2 s timeout | Critical | Heartbeat loss = orderly shutdown |
+| 3.6 | Independent OVP/OCP via dedicated ADC (not trusting main controller or module values) | Critical | Hardware comparator for < 1 us OVP |
+| 3.7 | Main controller heartbeat monitoring: CAN #2, 500 ms period, 2 s timeout | Critical | Heartbeat loss = orderly shutdown |
 | 3.8 | Contactor weld detection: aux NC contact check + voltage check | High | 50 ms + 500 ms post-open checks |
 | 3.9 | CP signal generation: +/-12V 1 kHz PWM, state detection (A--F) | Critical | Via dedicated analog frontend |
-| 3.10 | CAN #2 protocol: implement all 0x100--0x102 (CM5 -> Supv) and 0x200--0x202 (Supv -> CM5) messages | Critical | Per safety supervisor CAN spec |
+| 3.10 | CAN #2 protocol: implement all 0x100--0x102 (Main Controller -> Supv) and 0x200--0x202 (Supv -> Main Controller) messages | Critical | Per safety supervisor CAN spec |
 | 3.11 | Fault handling: 12 fault codes (F01--F12), response times (< 1 ms to 3 s) | Critical | |
 | 3.12 | Insulation monitoring: IMD interface (Bender isoCHA425HV via relay or direct) | High | During CableCheck phase |
 | 3.13 | RCD monitoring: Type B RCD trip detection | High | Hardware signal to safety loop |
@@ -164,7 +164,7 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 | 3.15 | Unit tests: > 90% branch coverage, MISRA C:2012 compliance | Critical | IEC 61508 SIL 2, ISO 13849 PLd |
 | 3.16 | FMEA and safety analysis documentation | High | Required for certification |
 
-### WS-4: EVerest Integration on CM5
+### WS-4: EVerest Integration on Phytec phyCORE-AM62x
 > **Owner:** Software team
 > **Duration:** 16 weeks
 > **Dependencies:** WS-2 (CAN protocol), WS-3 (safety supervisor CAN), WS-6 (HVAC CAN)
@@ -172,8 +172,8 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 #### 4A. Platform Setup (weeks 1--3)
 | # | Task | Priority |
 |---|------|----------|
-| 4A.1 | CM5 Linux image: Raspberry Pi OS Lite (64-bit), hardened for field use | Critical |
-| 4A.2 | Build EVerest from source (`everest-core`) on CM5, verify MQTT broker | Critical |
+| 4A.1 | phyCORE-AM62x Linux image: Yocto BSP with EVerest, hardened for field use | Critical |
+| 4A.2 | Build EVerest from source (`everest-core`) on phyCORE-AM62x, verify MQTT broker | Critical |
 | 4A.3 | Configure SocketCAN interfaces: `can0` (CAN #1, power modules), `can1` (CAN #2, safety), `can2` (CAN #3, HVAC) | Critical |
 | 4A.4 | Networking: ETH0 LAN, 5G modem WAN, PoE switch config | High |
 | 4A.5 | PLC modem bring-up: QCA7005 or Lumissil IS32CG5317 as Linux netdev | High |
@@ -223,10 +223,10 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 |---|------|----------|-------|
 | 5.1 | Cabinet mechanical design: 5 module slots, control section, cable management | Critical | IP54 enclosure |
 | 5.2 | Backplane busbar fabrication: 3-phase copper, tin-plated, 30x5 mm | Critical | Per backplane power management spec |
-| 5.3 | PDU 1 (Power): 2x 175A breakers, 2x 200A AC contactors, CTs | Critical | |
+| 5.3 | PDU 1 (Power): 5× 50A per-module MCBs, 5× 60A AC contactors, 15× CTs (60A/5A) | Critical | Per-module fault isolation |
 | 5.4 | PDU 2 (Auxiliary): dual SMPS (24V), DC-DC (12V, 5V), LiFePO4 UPS | High | |
 | 5.5 | PDU 3 (Cooling): coolant pump, radiator fans, HVAC interface | High | |
-| 5.6 | PDU 4 (Comms/HMI): CM5 mounting, Waveshare CAN adapters, PLC modems, touchscreen | High | |
+| 5.6 | PDU 4 (Comms/HMI): phyCORE-AM62x SOM + carrier board, EVSE Expansion Board (PLC), touchscreen | High | |
 | 5.7 | DC output contactor assembly: K2/K3 (500A), K4 pre-charge, R1 (100 ohm), R2 (10k ohm discharge) | Critical | |
 | 5.8 | Safety supervisor board: custom STM32 PCB or dev board + breakout | Critical | |
 | 5.9 | Wiring harness: CAN buses (shielded twisted pair), power, sensor cables | High | |
@@ -252,7 +252,7 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 | 6.8 | Autonomous safe mode: maintain last setpoint at 70% on CAN loss | High | 30 min timeout then max cooling |
 | 6.9 | Defrost cycle logic | Medium | |
 | 6.10 | Cold climate package: PTC heater, crankcase heater control | Medium | |
-| 6.11 | Integration test: HVAC unit on CAN #3 with CM5 HvacDriver | High | |
+| 6.11 | Integration test: HVAC unit on CAN #3 with phyCORE-AM62x HvacDriver | High | |
 
 ### WS-7: System Integration and Testing
 > **Owner:** Full team
@@ -261,10 +261,10 @@ This workstream is managed in the [[PDU-Micro]] workspace. Key deliverables need
 
 | # | Task | Priority | Notes |
 |---|------|----------|-------|
-| 7.1 | Bench integration: CM5 + safety supervisor + 1 PDU-Micro module | Critical | First end-to-end power flow |
+| 7.1 | Bench integration: phyCORE-AM62x + safety supervisor + 1 PDU-Micro module | Critical | First end-to-end power flow |
 | 7.2 | Scale to 5 modules: current sharing, module shedding, fault injection | Critical | |
 | 7.3 | Full charging session: ISO 15118 SDP -> session setup -> cable check -> pre-charge -> current demand -> shutdown | Critical | Using EV simulator or real EV |
-| 7.4 | Safety validation: E-stop, door interlock, IMD fault, RCD trip, CM5 crash, module fault | Critical | Each must result in safe shutdown |
+| 7.4 | Safety validation: E-stop, door interlock, IMD fault, RCD trip, main controller crash, module fault | Critical | Each must result in safe shutdown |
 | 7.5 | Thermal validation: full-load sustained run, HVAC derating chain test | High | |
 | 7.6 | OCPP backend integration test: remote start/stop, smart charging profiles, firmware update | High | |
 | 7.7 | Dual-connector session test (if applicable) | Medium | Power sharing between connectors |
@@ -322,7 +322,7 @@ WS-8                                            ██████████�
 |-------|-----------|
 | M2 | Safety supervisor board powered, CAN #2 loopback verified |
 | M3 | First PDU-Micro module producing DC output on bench |
-| M4 | CM5 running EVerest, SafetySupervisorBSP talking to STM32 |
+| M4 | phyCORE-AM62x running EVerest, SafetySupervisorBSP talking to STM32 |
 | M5 | PowerModuleDriver controlling 1 module via CAN-FD |
 | M6 | Cabinet assembled, 5 modules installed, backplane wired |
 | M7 | HVAC clip-on operational, thermal derating chain verified |
@@ -353,7 +353,7 @@ dcfc-safety-supervisor/
 │   ├── cp_signal.c/.h            # Control Pilot PWM + state detection
 │   ├── adc_monitor.c/.h          # Independent OVP/OCP
 │   ├── imd_driver.c/.h           # Insulation monitor interface
-│   ├── heartbeat.c/.h            # CM5 watchdog
+│   ├── heartbeat.c/.h            # Main controller watchdog
 │   └── fault_handler.c/.h        # 12 fault codes, logging
 ├── CAN/
 │   ├── can_protocol.c/.h         # CAN #2 message encode/decode
@@ -404,7 +404,7 @@ dcfc-everest-modules/
 │   └── component_config/               # OCPP device model
 ├── scripts/
 │   ├── setup_can.sh                    # CAN interface setup
-│   └── deploy.sh                       # CM5 deployment
+│   └── deploy.sh                       # phyCORE-AM62x deployment
 ├── tests/
 │   └── ...                             # pytest + EVerest test framework
 ├── CMakeLists.txt
@@ -439,7 +439,7 @@ To maintain protocol consistency across repositories, the following headers must
 | Header | Used By | Contents |
 |--------|---------|----------|
 | `dcfc_safety_can.h` | Safety supervisor + SafetySupervisorBSP | CAN #2 message IDs, signals, fault codes |
-| `pdu_can_protocol.h` | PDU-Micro PFC/DAB firmware + PowerModuleDriver | CAN #1 inter-module + CM5 message IDs, signals |
+| `pdu_can_protocol.h` | PDU-Micro PFC/DAB firmware + PowerModuleDriver | CAN #1 inter-module + main controller message IDs, signals |
 | `hvac_can_protocol.h` | HVAC firmware + HvacDriver | CAN #3 message IDs, signals, fault codes |
 
 **Strategy:** Maintain canonical copies in the firmware repos. Copy (or git submodule) into `dcfc-everest-modules` for the C++ EVerest side.
@@ -450,12 +450,12 @@ To maintain protocol consistency across repositories, the following headers must
 
 | # | Risk | Impact | Likelihood | Mitigation |
 |---|------|--------|------------|------------|
-| R1 | CAN-FD adapter on CM5 incompatible or unreliable | High | Medium | Verify Waveshare CAN-FD support early (WS-2.2); fallback to dedicated CAN-FD-to-Ethernet gateway (e.g., PEAK PCAN) |
-| R2 | PDU-Micro module firmware delayed | Critical | Medium | Start EVerest development with SIL simulation (dcfc_150kw_sim.yaml); decouple CM5 work from hardware |
+| R1 | Native CAN-FD on phyCORE-AM62x untested with PDU-Micro | High | Medium | Verify phyCORE-AM62x CAN-FD SocketCAN early (WS-2.2); 3x native CAN-FD eliminates adapter risk |
+| R2 | PDU-Micro module firmware delayed | Critical | Medium | Start EVerest development with SIL simulation (dcfc_150kw_sim.yaml); decouple EVerest work from hardware |
 | R3 | ISO 15118 PLC modem compatibility issues with EVs | High | Medium | Test with multiple EV models early; maintain DIN 70121 fallback |
 | R4 | Safety supervisor SIL 2 assessment fails | High | Low | Engage safety assessor early (month 3); design for SIL 2 from start |
 | R5 | Thermal management insufficient at 150 kW sustained | Medium | Low | PDU-Micro thermal budget shows adequate margin; validate with full-power test |
-| R6 | CM5 compute insufficient for EVerest + ISO 15118 + OCPP | Low | Low | CM5 has 4 GB RAM and quad-core; EVerest is lightweight; PLC modem offloads PHY |
+| R6 | phyCORE-AM62x compute insufficient for EVerest + ISO 15118 + OCPP | Low | Low | phyCORE-AM62x has up to 4 GB RAM and quad-core A53; EVerest is lightweight; PLC modem offloads PHY |
 | R7 | OCPP 2.0.1 backend interoperability issues | Medium | Medium | Test with multiple CSMS vendors; use EVerest's certified libocpp |
 | R8 | Module-to-module current sharing instability at 5 modules | Medium | Low | PDU-Micro droop-based sharing is well-studied; bench test early |
 
@@ -485,10 +485,10 @@ Per the existing DCFC hardware component research:
 | Item | Unit Cost (est.) | Qty | Subtotal |
 |------|----------------:|----:|----------:|
 | PDU-Micro 30 kW modules | $1,815 | 5 | $9,075 |
-| CM5 4GB + IO Board + PoE HAT | $110 | 1 | $110 |
+| Phytec phyCORE-AM62x SOM + carrier board | $140 | 1 | $140 |
 | Safety Supervisor (STM32 custom board) | $120 | 1 | $120 |
 | IO Controller (IRIV IOC RP2350) | $80 | 1 | $80 |
-| Waveshare CAN + RS485 adapters | $70 | 2 | $140 |
+| EVSE Expansion Board (PLC) | $50 | 1 | $50 |
 | PLC modems (ISO 15118) | $200 | 2 | $400 |
 | PoE Switch (Teltonika TSW200) | $125 | 1 | $125 |
 | PSU (Meanwell SDR-150-24 + DC-DC) | $60 | 1 | $60 |
@@ -503,7 +503,7 @@ Per the existing DCFC hardware component research:
 | HVAC clip-on unit | $1,200 | 1 | $1,200 |
 | Coolant pump + radiator + fans | $300 | 1 set | $300 |
 | Wiring, connectors, misc. | $500 | 1 | $500 |
-| **Total (prototype)** | | | **~$15,570** |
+| **Total (prototype)** | | | **~$15,510** |
 
 ---
 
@@ -513,8 +513,8 @@ These items need resolution before or during early development:
 
 | # | Decision | Options | Recommendation | Deadline |
 |---|----------|---------|----------------|----------|
-| D1 | CM5 to module CAN architecture | Option A (master only) vs Option B (address each) | Option A -- simpler CM5 code, leverages PDU-Micro stacking | Month 1 |
-| D2 | CAN-FD adapter for CM5 | Waveshare (verify FD support) vs PEAK PCAN-USB FD vs MCP2518FD SPI hat | Test Waveshare first; order PEAK as backup | Month 1 |
+| D1 | Main controller to module CAN architecture | Option A (master only) vs Option B (address each) | Option A -- simpler EVerest code, leverages PDU-Micro stacking | Month 1 |
+| D2 | CAN-FD validation on phyCORE-AM62x | Verify all 3x native CAN-FD interfaces work with SocketCAN | Test with PDU-Micro CAN-FD loopback early | Month 1 |
 | D3 | Safety supervisor necessity | Full STM32 supervisor vs hardware interlock only | Full supervisor -- required for SIL 2 and contactor sequencing | Month 1 |
 | D4 | BSP driver pattern | Pattern B (native CAN) vs Pattern D (MQTT bridge) | Pattern B -- lower latency, simpler stack | Month 2 |
 | D5 | Dual connector support | Single CCS2 vs dual CCS2 power-shared | Single first; design for dual extensibility | Month 2 |
@@ -533,4 +533,4 @@ These items need resolution before or during early development:
 - [[docs/Software/04 - Power Module CAN Bus Interface]] -- CAN #1 protocol (to be updated)
 - [[docs/Software/EVerest/02 - EVerest Power Module Driver]] -- EVerest module design
 - [[docs/HVAC/04 - HVAC CANBus Interface Specification]] -- CAN #3 protocol
-- [[research/02 - CM5 based Main Controller]] -- Controller selection rationale
+- [[research/02 - CM5 based Main Controller]] -- Main controller selection rationale (legacy CM5 → Phytec migration)

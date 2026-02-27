@@ -6,7 +6,7 @@ Related: [[01 - EVerest Safety Supervisor Integration]] | [[01 - Software Framew
 
 ## 1. Overview
 
-The DC power modules (25 kW bricks) communicate with the Phytec SBC main controller over a dedicated CAN bus (CAN #1). This interface handles voltage/current setpoint control, module enable/disable, status telemetry, and fault reporting. Each module contains its own DSP/MCU that runs closed-loop power conversion; the Phytec SBC acts as the bus master, issuing high-level setpoints and monitoring aggregate output.
+The DC power modules (30 kW bricks) communicate with the Phytec SBC main controller over a dedicated CAN bus (CAN #1). This interface handles voltage/current setpoint control, module enable/disable, status telemetry, and fault reporting. Each module contains its own DSP/MCU that runs closed-loop power conversion; the Phytec SBC acts as the bus master, issuing high-level setpoints and monitoring aggregate output.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -28,7 +28,7 @@ The DC power modules (25 kW bricks) communicate with the Phytec SBC main control
             │                 |                 │                      │
      ┌──────┴──────┐   ┌──────┴──────┐   ┌──────┴──────┐        ┌──────┴──────┐
      │  Module 1   │   │  Module 2   │   │  Module 3   │  ...   │  Module N   │
-     │   25 kW     │   │   25 kW     │   │   25 kW     │        │   25 kW     │
+     │   30 kW     │   │   30 kW     │   │   30 kW     │        │   30 kW     │
      │  Node 0x01  │   │  Node 0x02  │   │  Node 0x03  │        │  Node 0x0N  │
      └─────────────┘   └─────────────┘   └─────────────┘        └─────────────┘
             │                 │                 │                      │
@@ -172,7 +172,7 @@ Sent periodically by each module.
 | `0x06` | Fault | Output disabled, fault latched |
 | `0x07` | Shutdown | Controlled shutdown in progress |
 
-**Cycle time:** 100 ms per module. With 6 modules, the Phytec SBC receives ~60 status messages/second on CAN #1.
+**Cycle time:** 100 ms per module. With 5 modules, the Phytec SBC receives ~50 status messages/second on CAN #1.
 
 #### `0x111` + Node Offset: Power Measurement
 
@@ -312,12 +312,12 @@ All modules connected to the shared DC output bus operate in droop-mode current 
 
 ```
 Total requested current: 300 A
-Active modules: 6 × 25 kW
-Per-module limit: 300 / 6 = 50 A each
+Active modules: 5 × 30 kW
+Per-module limit: 300 / 5 = 60 A each
 
 Phytec SBC sends to each module:
   Voltage setpoint: 800.0 V (same for all)
-  Current limit: 50.0 A (equal split)
+  Current limit: 60.0 A (equal split)
 
 If Module 3 is derated to 70% (thermal):
   Module 3 limit: 35 A
@@ -331,32 +331,35 @@ The Phytec SBC recalculates current distribution whenever:
 - The EV changes its current demand
 - EnergyManager changes the site power limit
 
-### 5.3 N+1 Redundancy
+### 5.3 N+1 Redundancy (Optional)
 
-One module is designated as hot standby (Priority = 1). It stays in Standby state with DC link charged but output disabled. If an active module faults:
+> [!note] The default 150 kW configuration runs 5 active modules / 0 standby (`redundant_modules: 0`). N+1 redundancy applies to larger configurations (e.g., 6+ modules) where one module is designated as hot standby.
+
+When `redundant_modules > 0`, one module is designated as hot standby (Priority = 1). It stays in Standby state with DC link charged but output disabled. If an active module faults:
 
 ```
+Example (6-module configuration with 1 standby):
+
 1. Module 4 reports Fault (0x310, code 0x07, MOSFET over-temperature)
 2. Phytec SBC receives fault, removes Module 4 from active pool
-3. Phytec SBC recalculates: 5 remaining modules carry the load
-4. If total demand > 5-module capacity:
-   Phytec SBC enables standby module (Module 7, Priority → 0, Enable → 1)
-5. Phytec SBC sends updated current limits to all active modules
-6. EvseManager logs event, OCPP sends StatusNotification
+3. Phytec SBC promotes standby Module 6 (Priority → 0, Enable → 1)
+4. Phytec SBC sends updated current limits to all active modules
+5. EvseManager logs event, OCPP sends StatusNotification
 
 Total interruption: <200 ms (standby module DC link already charged)
 ```
+
+In the default 5-module / 0-standby configuration, a module fault results in graceful degradation (see §5.4) rather than standby promotion.
 
 ### 5.4 Graceful Degradation
 
 | Active Modules | Max Output | Action |
 |----------------|------------|--------|
-| 6 (all) | 150 kW | Normal operation |
-| 5 | 125 kW | Standby promoted, minor derating if needed |
-| 4 | 100 kW | EvseManager reports reduced capacity to EV |
-| 3 | 75 kW | ISO 15118 renegotiation of charge parameters |
-| 2 | 50 kW | Continued charging at reduced rate |
-| 1 | 25 kW | Minimum viable charging |
+| 5 (all) | 150 kW | Normal operation |
+| 4 | 120 kW | EvseManager reports reduced capacity to EV |
+| 3 | 90 kW | ISO 15118 renegotiation of charge parameters |
+| 2 | 60 kW | Continued charging at reduced rate |
+| 1 | 30 kW | Minimum viable charging |
 | 0 | 0 kW | Session terminated, fault reported |
 
 ## 6. EVerest Integration
@@ -387,7 +390,7 @@ The `PowerModuleDriver` EVerest module implements the `power_supply_DC` interfac
 ```yaml
 # modules/PowerModuleDriver/manifest.yaml
 description: >
-  CAN-based driver for paralleled 25 kW DC power modules.
+  CAN-based driver for paralleled 30 kW DC power modules.
   Provides power_supply_DC and powermeter interfaces.
 config:
   can_device:
@@ -397,11 +400,11 @@ config:
   num_modules:
     description: Number of power modules on the bus
     type: integer
-    default: 6
+    default: 5
   module_power_kw:
     description: Rated power per module in kW
     type: number
-    default: 25.0
+    default: 30.0
   max_voltage_V:
     description: Maximum output voltage
     type: number
@@ -436,12 +439,12 @@ active_modules:
     module: PowerModuleDriver
     config_module:
       can_device: can1
-      num_modules: 6
-      module_power_kw: 25.0
+      num_modules: 5
+      module_power_kw: 30.0
       max_voltage_V: 1000.0
-      max_current_A: 375.0      # 6 × 62.5 A per module at 400V
+      max_current_A: 375.0      # 5 × 75 A per module at 400V
       heartbeat_timeout_ms: 3000
-      redundant_modules: 1
+      redundant_modules: 0
 
   evse_manager:
     module: EvseManager
@@ -601,6 +604,6 @@ The ENABLE hardware signal provides a safety-rated shutdown path that bypasses b
 - [[03 - Safety Supervisor Controller]] — ENABLE signal and safety shutdown paths
 - [[01 - Software Framework]] — EVerest module architecture and MQTT IPC
 - [[02 - Communication Protocols]] — CAN bus physical layer and wiring
-- [[docs/System/01 - System Architecture|01 - System Architecture]] — Modular power architecture and 25 kW module internals
+- [[docs/System/01 - System Architecture|01 - System Architecture]] — Modular power architecture and 30 kW module internals
 - [[docs/Hardware/01 - Hardware Components|01 - Hardware Components]] — Power module electrical specifications
 - [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]] — CAN #3 HVAC interface (design pattern reference)

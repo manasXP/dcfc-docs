@@ -736,10 +736,10 @@ active_modules:
     module: PowerModuleDriver
     config_module:
       can_device: can1
-      num_modules: 6
-      redundant_modules: 1
-      module_power_kw: 25.0
-      module_max_current_A: 62.5
+      num_modules: 5
+      redundant_modules: 0
+      module_power_kw: 30.0
+      module_max_current_A: 75.0
 
   # ── Over-Voltage Monitor ──
   ovm:

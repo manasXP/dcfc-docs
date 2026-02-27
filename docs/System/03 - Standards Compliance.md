@@ -74,6 +74,15 @@ This document outlines the key standards and compliance requirements for DC Fast
 - **GB/T 27930**: Communication protocol between EV and charging station
 - **CQC Certification**: China Quality Certification
 
+### 3.4 India
+- **IS 17017 (Part 23)**: DC electric vehicle charging station requirements (50 kW–200 kW), aligned with IEC 61851-23
+- **IS 17017 (Part 24)**: Digital communication between DC EVSE and EV
+- **IS 17017 (Part 25)**: Low-power DC charging (<7 kW) for light EVs
+- **IS 15118 series**: Vehicle-to-grid communication (deployed with CCS connectors)
+- **BIS Certification**: Mandatory Bureau of Indian Standards certification for all EV chargers sold, imported, or installed in India (NABL-accredited lab testing required)
+- **AIS 138 (Part 2)**: Automotive Industry Standard for DC fast charging connectors (CCS2 / Bharat DC001)
+- **ARAI Type Approval**: Automotive Research Association of India testing and approval
+
 ## 4. Safety Standards
 
 ### 4.1 Electrical Safety
@@ -116,6 +125,7 @@ This document outlines the key standards and compliance requirements for DC Fast
 - **TÜV** (Europe)
 - **UL** (North America)
 - **CQC** (China)
+- **BIS / ARAI** (India)
 - **CE marking authorities** (EU)
 
 ## 6. Compliance Checklist
@@ -127,12 +137,18 @@ This document outlines the key standards and compliance requirements for DC Fast
 - [ ] OCPP integration for network management
 - [ ] Safety circuit design per regional standards
 - [ ] Cybersecurity measures per ISO/SAE 21434
+- [ ] IS 17017 (Part 23/24) compliance for India market
+- [ ] BIS certification and ARAI type approval for India
+- [ ] Bharat DC001 / CCS2 connector support per AIS 138
 
 ### 6.2 Manufacturing Phase
 - [ ] Component sourcing from certified suppliers
 - [ ] Quality management system (ISO 9001)
 - [ ] Production testing procedures
 - [ ] Traceability and documentation
+- [ ] BIS product registration (IS 17017) for India market
+- [ ] NABL-accredited lab testing for India certification
+- [ ] ARAI type approval for DC charging connectors for India
 
 ### 6.3 Installation Phase
 - [ ] Local electrical code compliance
@@ -140,6 +156,9 @@ This document outlines the key standards and compliance requirements for DC Fast
 - [ ] Network connectivity verification
 - [ ] User interface accessibility
 - [ ] Signage and labeling requirements
+- [ ] CEA (Central Electricity Authority) installation guidelines for India
+- [ ] DISCOM approval and grid connection compliance for India
+- [ ] BIS-certified metering and earthing per IS 3043 for India
 
 ### 6.4 Operation Phase
 - [ ] Regular maintenance schedules
@@ -147,6 +166,9 @@ This document outlines the key standards and compliance requirements for DC Fast
 - [ ] Incident reporting and tracking
 - [ ] Performance monitoring
 - [ ] Compliance audits
+- [ ] OCPP reporting to BPCL/FAME-II or PM E-DRIVE portal for India subsidized stations
+- [ ] Periodic BIS and ARAI re-certification compliance for India
+- [ ] CEA safety inspection and renewal for India
 
 ## 7. Documentation Requirements
 

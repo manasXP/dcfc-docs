@@ -26,7 +26,7 @@ This document details the technical specifications for an 800V DC Fast Charger (
 
 ### 2.3 Architecture
 
-- **Modular Design**: Power blocks of 25 kW or 50 kW modules
+- **Modular Design**: Power blocks of 30 kW modules (PDU-Micro)
 - **Parallel Configuration**: Modules stacked in parallel to achieve higher total output power
 - **Scalability**: Allows flexible power output configurations
 - **Thermal Management**: External HVAC clip-on unit for cabinet cooling

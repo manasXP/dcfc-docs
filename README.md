@@ -51,7 +51,7 @@ Design documentation for a 150kW DC Fast Charger supporting both 400V and 800V e
 
 ### Research
 - [Safety Philosophy](research/01%20-%20Safety%20Philosophy.md)
-- [CM5 Based Main Controller](research/02%20-%20CM5%20based%20Main%20Controller.md)
+- [Main Controller (Phytec phyCORE-AM62x)](research/02%20-%20CM5%20based%20Main%20Controller.md)
 - [150kW DCFC Comparison](research/03%20-%20150kW%20DCFC%20Comparison.md)
 - [Phytec SBC Replacement](research/04%20-%20Phytec%20SBC%20Replacement.md)
 - [EVerest Module Architecture](research/05%20-%20EVerest%20Module%20Architecture.md)

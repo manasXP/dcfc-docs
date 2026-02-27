@@ -8,7 +8,7 @@ Related: [[04 - Power Module CAN Bus Interface]] | [[01 - EVerest Safety Supervi
 
 The `PowerModuleDriver` is a custom EVerest C++ module that runs on the Phytec SBC and bridges the EVerest `power_supply_DC` interface to the physical power modules on CAN #1. It translates high-level commands from EvseManager (set voltage, set current, change mode) into per-module CAN setpoints, while aggregating individual module status into a unified view for the rest of the EVerest stack.
 
-This module is the single point of coordination for all paralleled 25 kW bricks: it handles current distribution, module health tracking, N+1 redundancy failover, thermal derating compensation, and energy metering aggregation.
+This module is the single point of coordination for all paralleled 30 kW bricks: it handles current distribution, module health tracking, thermal derating compensation, and energy metering aggregation. N+1 redundancy failover is supported when `redundant_modules > 0` (e.g., larger configurations with 6+ modules); the default 150 kW configuration runs 5 active / 0 standby.
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
@@ -34,7 +34,7 @@ This module is the single point of coordination for all paralleled 25 kW bricks:
                                               │ CAN #1, 500 kbps
                                               ▼
                                    ┌────────────────────┐
-                                   │  25 kW Modules ×N  │
+                                   │  30 kW Modules ×N  │
                                    └────────────────────┘
 ```
 
@@ -82,9 +82,9 @@ current_A: number     # Sum of output current from all active modules
 bidirectional: bool                    # false for v1
 max_export_voltage_V: number           # e.g. 1000.0
 min_export_voltage_V: number           # e.g. 200.0
-max_export_current_A: number           # e.g. 375.0 (6 × 62.5 A)
+max_export_current_A: number           # e.g. 375.0 (5 × 75 A)
 min_export_current_A: number           # e.g. 0.0
-max_export_power_W: number             # e.g. 150000 (6 × 25 kW)
+max_export_power_W: number             # e.g. 150000 (5 × 30 kW)
 current_regulation_tolerance_A: number # e.g. 2.0
 peak_current_ripple_A: number          # e.g. 5.0
 energy_mix_uuid: string                # optional
@@ -117,9 +117,9 @@ current_A:
 ```yaml
 # modules/PowerModuleDriver/manifest.yaml
 description: >
-  CAN-based driver for paralleled 25 kW DC power modules.
-  Manages current distribution, health monitoring, N+1
-  redundancy, and energy metering aggregation.
+  CAN-based driver for paralleled 30 kW DC power modules.
+  Manages current distribution, health monitoring,
+  and energy metering aggregation.
 config:
   can_device:
     description: Linux SocketCAN interface name
@@ -128,19 +128,19 @@ config:
   num_modules:
     description: Total number of power modules on the bus
     type: integer
-    default: 6
+    default: 5
   redundant_modules:
     description: Number of hot-standby modules (N+1)
     type: integer
-    default: 1
+    default: 0
   module_power_kw:
     description: Rated power per module
     type: number
-    default: 25.0
+    default: 30.0
   module_max_current_A:
     description: Maximum current per individual module
     type: number
-    default: 62.5
+    default: 75.0
   max_voltage_V:
     description: Maximum system output voltage
     type: number
@@ -841,7 +841,7 @@ active_modules:
 
 | Scenario | Steps | Expected Result |
 |----------|-------|-----------------|
-| Normal 150 kW charge | setMode(Export), setExport(800V, 187.5A) | 6 modules each at ~31.25 A, aggregate = 187.5 A |
+| Normal 150 kW charge | setMode(Export), setExport(800V, 187.5A) | 5 modules each at ~37.5 A, aggregate = 187.5 A |
 | Module fault mid-session | Inject fault on Module 3 during charge | Standby promoted, current redistributed, no session drop |
 | Full derating | All modules at 70% thermal limit | `capabilities` updated, EvseManager reduces demand |
 | Precharge | setMode(Precharge), setExport(800V, 2A) | Single module ramps bus voltage, rest in standby |
@@ -855,4 +855,4 @@ active_modules:
 - [[03 - Safety Supervisor Controller]] — Hardware ENABLE signal that overrides CAN commands
 - [[01 - Software Framework]] — EVerest module architecture and MQTT IPC
 - [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]] — EVerest `power_supply_DC` interface spec and InfyPower driver reference
-- [[docs/System/01 - System Architecture|01 - System Architecture]] — 25 kW module internal architecture and control hierarchy
+- [[docs/System/01 - System Architecture|01 - System Architecture]] — 30 kW module internal architecture and control hierarchy

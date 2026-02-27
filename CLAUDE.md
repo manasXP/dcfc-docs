@@ -14,11 +14,12 @@ This is a workspace within an Obsidian vault dedicated to **DC Fast Charger (DCF
 
 This workspace contains research and documentation on:
 
-- **Technical Specifications**: Electrical requirements, power conversion (3-phase AC to DC), voltage ranges (200V-1000V DC) for 400V and 800V EV compatibility
+- **Technical Specifications**: Electrical requirements, power conversion (3-phase AC to DC), voltage ranges (150V-1000V DC) for 400V and 800V EV compatibility
 - **Standards Compliance**: IEC 61851, ISO 15118, OCPP (Open Charge Point Protocol)
-- **Hardware Components**: Power modules, connectors (CCS Combo), cooling systems, safety protections
-- **Software Framework**: EVerest - open-source modular software framework for EV chargers (Linux Foundation Energy)
-- **Communication Protocols**: CAN, UART, Ethernet for vehicle communication; OCPP for network management
+- **Main Controller**: Phytec phyCORE-AM62x (TI AM625, 4x Cortex-A53, 3x native CAN-FD) running Linux + EVerest
+- **Hardware Components**: 5x 30 kW PDU-Micro power modules (in-house SiC design), CCS Combo connectors, HVAC clip-on cooling, STM32 safety supervisor
+- **Software Framework**: EVerest - open-source modular software framework for EV chargers (Linux Foundation Energy), deployed on Phytec Yocto BSP
+- **Communication Protocols**: CAN-FD (power modules), CAN (safety supervisor, HVAC), Ethernet/5G for OCPP network management
 
 ## Key Documentation
 
@@ -51,8 +52,16 @@ When adding research or documentation:
 - **BMS**: Battery Management System
 - **EVerest**: Open-source EV charging software framework
 - **SiC MOSFETs**: Silicon Carbide transistors for high-efficiency power conversion
+- **phyCORE-AM62x**: Phytec SOM used as the main controller (replaced Raspberry Pi CM5)
+- **PDU-Micro**: In-house 30 kW SiC power module (5 modules = 150 kW)
+- **Safety Supervisor**: Dedicated STM32 controller for hardware interlock and contactor sequencing (SIL 2)
+
+### Important: No CM5 References
+The main controller has been migrated from Raspberry Pi CM5 to **Phytec phyCORE-AM62x**. Do not introduce CM5 or Raspberry Pi references in new documentation. The legacy research note `research/02 - CM5 based Main Controller.md` is kept for historical reference only.
 
 ## External Resources
 
 - EVerest GitHub: https://github.com/EVerest/EVerest
 - Linux Foundation Energy: https://lfenergy.org/projects/everest/
+- Phytec phyCORE-AM62x: https://www.phytec.com/product/phycore-am62x/
+- Phytec EV Charging Docs: https://docs.phytec.com/projects/yocto-phycore-am62x/en/latest/3rdpartyintegration/ev-charging.html

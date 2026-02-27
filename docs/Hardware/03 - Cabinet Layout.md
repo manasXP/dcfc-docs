@@ -516,7 +516,7 @@ AIRFLOW DIRECTION: Bottom to Top (Natural Convection + Forced Air)
 
 | Cable Type | Route | Separation | Notes |
 |------------|-------|------------|-------|
-| AC Power (L1, L2, L3, N) | Right cable tray | 200mm from control cables | Use cable ties every 300mm |
+| AC Power (L1, L2, L3) | Right cable tray | 200mm from control cables | Use cable ties every 300mm |
 | DC Output | Center/front | Shielded, separate tray | Liquid-cooled above 150kW |
 | Control (24V DC) | Left cable tray | Away from power | Screened cables |
 | Communication (CAN, ETH) | Left cable tray | 100mm from power | Shielded twisted pair |

@@ -1,7 +1,7 @@
 
 # Interlocking diagram for better understanding
 
-Below is a **text‑based interlock diagram** tailored to your 150 kW DC charger concept (AC + DC side), showing how hardware safety interlocks sit under CM4/EVerest supervision. This is a conceptual view, not a wiring drawing.[^1][^2][^3][^4][^5]
+Below is a **text‑based interlock diagram** tailored to your 150 kW DC charger concept (AC + DC side), showing how hardware safety interlocks sit under main controller/EVerest supervision. This is a conceptual view, not a wiring drawing.[^1][^2][^3][^4][^5]
 
 ## High‑level safety chain
 
@@ -13,7 +13,7 @@ Below is a **text‑based interlock diagram** tailored to your 150 kW DC charger
 └───────────┬────────────────┘           │  Outlet Contactors (per EV│
             │                            └───────────┬───────────────┘
             ▼                                        │
-      HARDWARE TRIP LOOP (no CM4 required)           ▼
+      HARDWARE TRIP LOOP (no main controller required)           ▼
 ```
 
 
@@ -73,14 +73,14 @@ This shows the **series safety chain** that must be OK for power contactors to s
          └────────────────────────────────────────────────┘
 ```
 
-If anything in this chain opens, **AC and DC contactors drop**, regardless of what CM5 is doing.[^4][^1][^3]
+If anything in this chain opens, **AC and DC contactors drop**, regardless of what the main controller is doing.[^4][^1][^3]
 
-## How CM4/EVerest connects to this
+## How the Main Controller/EVerest connects to this
 
-CM4/EVerest **monitors** but does not own the safety loop.[^2][^5]
+The main controller/EVerest **monitors** but does not own the safety loop.[^2][^5]
 
 ```text
-              CM4 + EVSE AUX BOARD
+              MAIN CONTROLLER + EVSE AUX BOARD
 ┌─────────────────────────────────────────────────────────────┐
 │  Inputs (from safety loop, read-only):                      │
 │   - E-STOP status (digital input)                           │
@@ -99,15 +99,15 @@ CM4/EVerest **monitors** but does not own the safety loop.[^2][^5]
 
 Typical behavior:
 
-- CM4 **requests enable** only after all preconditions are OK (EV connected, CP state correct, no faults).[^5][^2]
-- If CM4 detects a fault (overcurrent trend, temperature, protocol error), it first **disables bricks over CAN**, then drops its enable request so the safety relay opens the contactors. Hardware still trips if CM4 fails.[^7][^8][^3][^5]
+- Main controller **requests enable** only after all preconditions are OK (EV connected, CP state correct, no faults).[^5][^2]
+- If the main controller detects a fault (overcurrent trend, temperature, protocol error), it first **disables bricks over CAN**, then drops its enable request so the safety relay opens the contactors. Hardware still trips if the main controller fails.[^7][^8][^3][^5]
 
 
 ## AC and DC contactor interlock (sequence view)
 
 ```text
 1. All safety inputs OK → safety loop closed → safety relay ready.
-2. CM4 asserts ENABLE to safety relay.
+2. Main controller asserts ENABLE to safety relay.
 3. Safety relay energizes:
       - AC input contactor.
       - Precharge contactor (via EVSE aux logic).
@@ -116,7 +116,7 @@ Typical behavior:
 5. Any fault:
       - Hardware (IMD/RCD/E-STOP/door/thermal) opens loop →
         all contactors drop immediately.
-      - Or CM4 removes ENABLE and commands bricks off →
+      - Or main controller removes ENABLE and commands bricks off →
         contactors drop in a controlled way.
 ```
 

@@ -9,7 +9,7 @@ Key Specifications for an 800V DC Fast Charger
 
 | Category                | Specification Details                                                                                                                              | Notes                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Input (AC Supply)       | Three-phase 400-480 Vac nominal (EU/US grids)                                                                                                      | Requires high-capacity service and potential transformer upgrades.                                         |
+| Input (AC Supply)       | Three-phase 400-480 Vac nominal, 3-wire (no neutral) + PE (EU/US grids)                                                                             | Requires high-capacity service and potential transformer upgrades.                                         |
 | —                       | Frequency: 50/60 Hz                                                                                                                                | —                                                                                                          |
 | —                       | Power Factor: &gt;0.99                                                                                                                             | Ensures efficient power draw from the grid.                                                                |
 | Output (DC to EV)       | Voltage Range: 200 V to 1000 V DC                                                                                                                  | Wide range ensures compatibility with both 400V and 800V EVs.                                              |
@@ -104,7 +104,7 @@ In essence, EVerest is a foundational software platform that simplifies building
 ## Research
 
 1. [[research/01 - Safety Philosophy|01 - Safety Philosophy]]
-2. [[research/02 - CM5 based Main Controller|02 - CM5 based Main Controller]]
+2. [[research/02 - CM5 based Main Controller|02 - Main Controller (Phytec phyCORE-AM62x)]]
 3. [[research/03 - 150kW DCFC Comparison|03 - 150kW DCFC Comparison]]
 4. [[research/04 - Phytec SBC Replacement|04 - Phytec SBC Replacement]]
 5. [[research/05 - EVerest Module Architecture|05 - EVerest Module Architecture]]

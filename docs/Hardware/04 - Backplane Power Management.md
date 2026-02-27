@@ -24,12 +24,11 @@ The backplane power management system is the internal power distribution backbon
                                     ▼
             ┌───────────────────────────────────────────────┐
             │              BACKPLANE POWER BUS              │
-            │     (3-Phase + Neutral + PE Busbar System)    │
+            │     (3-Phase + PE Busbar System)               │
             │                                               │
             │   L1 ═══════════════════════════════════════  │
             │   L2 ═══════════════════════════════════════  │
             │   L3 ═══════════════════════════════════════  │
-            │   N  ═══════════════════════════════════════  │
             │   PE ═══════════════════════════════════════  │
             └───┬──────────┬──────────┬──────────┬─────────┘
                 │          │          │          │
@@ -51,7 +50,6 @@ The backplane uses a copper busbar system mounted at the rear of the cabinet to 
 |-----------|---------------|-------|
 | Material | Electrolytic copper (C110), tin-plated | Corrosion resistance |
 | Busbar Cross-Section | 30×5 mm (L1, L2, L3) | Rated for 400A continuous |
-| Neutral Bar | 20×5 mm | Sized for unbalanced loads |
 | PE Bar | 30×5 mm | Bonded to cabinet chassis |
 | Mounting | Insulated standoffs (10 kV rated) | Maintains creepage distance |
 | Connections | Bolted joints with Belleville washers | Maintains torque under thermal cycling |
@@ -61,25 +59,27 @@ The backplane uses a copper busbar system mounted at the rear of the cabinet to 
 
 ```
     REAR CABINET WALL (Vertical Mounting)
-    ┌─────────────────────────────────────────────────────────┐
-    │                                                         │
-    │  PE ══╤══════════╤══════════╤══════════╤═══════════     │
-    │       │          │          │          │                │
-    │  N  ══╤══════════╤══════════╤══════════╤═══════════     │
-    │       │          │          │          │                │
-    │  L3 ══╤══════════╤══════════╤══════════╤═══════════     │
-    │       │          │          │          │                │
-    │  L2 ══╤══════════╤══════════╤══════════╤═══════════     │
-    │       │          │          │          │                │
-    │  L1 ══╤══════════╤══════════╤══════════╤═══════════     │
-    │       │          │          │          │                │
-    │    TAP 1      TAP 2     TAP 3      TAP 4                │
-    │   (PDU 1)    (PDU 2)   (PDU 3)    (PDU 4)               │
-    │                                                         │
-    │  Insulated standoff mounting points: ● (every 200mm)    │
-    │                                                         │
-    └─────────────────────────────────────────────────────────┘
+    ┌──────────────────────────────────────────────────────────────────┐
+    │                                                                  │
+    │  PE ══╤══════════╤══════════╤══════════╤══════════╤═══════       │
+    │       │          │          │          │          │              │
+    │  L3 ══╤══════════╤══════════╤══════════╤══════════╤═══════       │
+    │       │          │          │          │          │              │
+    │  L2 ══╤══════════╤══════════╤══════════╤══════════╤═══════       │
+    │       │          │          │          │          │              │
+    │  L1 ══╤══════════╤══════════╤══════════╤══════════╤═══════       │
+    │       │          │          │          │          │              │
+    │    TAP 1      TAP 2     TAP 3      TAP 4     TAP 5              │
+    │   (PDU 1)    (PDU 2)   (PDU 3)    (PDU 4)   (HVAC AC)          │
+    │                                               L1+L2 only        │
+    │                                                                  │
+    │  Insulated standoff mounting points: ● (every 200mm)             │
+    │                                                                  │
+    └──────────────────────────────────────────────────────────────────┘
 ```
+
+> [!note] TAP 5
+> TAP 5 is a 2-phase tap (L1 + L2 only) providing 400V AC line-to-line for the HVAC compressor inverter. It feeds a dedicated 2-pole MCB (CB-HVAC) routed directly to the clip-on interface connector. Not used by HVAC units ≤3 kW (Configuration A). See [[docs/HVAC/01 - HVAC Unit Specification|01 - HVAC Unit Specification]] §2.1.
 
 ### 3.3 Busbar Protection
 
@@ -94,49 +94,50 @@ Each PDU is a self-contained distribution panel mounted on DIN rail below the bu
 
 ### 4.1 PDU 1 — Power Modules (High Power)
 
-**Purpose**: Feed 3-phase AC to power conversion modules
+**Purpose**: Feed 3-phase AC to individual power conversion modules with per-module fault isolation
 
 ```
 Backplane Tap 1 (L1, L2, L3, PE)
 │
-├─── Branch Breaker CB-PM1 (175A, 3-pole, Type C)
-│    │
-│    └─── AC Contactor K-PM1 (200A, 3-pole)
-│         Coil: 24V DC (from safety relay chain)
-│         Aux contacts: 1 NO + 1 NC (status feedback)
-│         │
-│         └─── Power Module #1 AC Input
+├─── CB-PM1 (50A, 3-pole, Type C) → K-PM1 (60A contactor) → Module #1
+│    Coil: 24V DC (from safety relay chain)
+│    Aux contacts: 1 NO + 1 NC (status feedback)
+│    Current Monitoring: 3× CT (60A/5A)
 │
-├─── Branch Breaker CB-PM2 (175A, 3-pole, Type C)
-│    │
-│    └─── AC Contactor K-PM2 (200A, 3-pole)
-│         Coil: 24V DC (from safety relay chain)
-│         │
-│         └─── Power Module #2 AC Input (if installed)
+├─── CB-PM2 (50A, 3-pole, Type C) → K-PM2 (60A contactor) → Module #2
+│    Current Monitoring: 3× CT (60A/5A)
 │
-└─── Current Monitoring
-     3x CT (200A/5A) per branch
-     Output: To Main ECU analog inputs
+├─── CB-PM3 (50A, 3-pole, Type C) → K-PM3 (60A contactor) → Module #3
+│    Current Monitoring: 3× CT (60A/5A)
+│
+├─── CB-PM4 (50A, 3-pole, Type C) → K-PM4 (60A contactor) → Module #4
+│    Current Monitoring: 3× CT (60A/5A)
+│
+└─── CB-PM5 (50A, 3-pole, Type C) → K-PM5 (60A contactor) → Module #5
+     Current Monitoring: 3× CT (60A/5A)
+
+All CT outputs: To Main ECU analog inputs
 ```
 
 | Parameter | Value |
 |-----------|-------|
-| Max Load per Branch | 175A per phase |
-| Total PDU Capacity | 350A (2 branches) |
+| Max Load per Module | 50A per phase |
+| Total PDU Capacity | 250A (5 branches) |
 | Protection Coordination | CB-PM trips before main AC breaker |
 | Contactor Control | Via safety relay + Main ECU DO |
+| Fault Isolation | Per-module — single module fault does not affect others |
 
 ### 4.2 PDU 2 — Auxiliary Control (Low Voltage Generation)
 
 **Purpose**: Generate low-voltage DC rails for all control subsystems
 
 ```
-Backplane Tap 2 (L1, N, PE)  ── Single phase tap
+Backplane Tap 2 (L1, L2, L3, PE)  ── 3-phase tap
 │
-├─── Branch Breaker CB-AUX1 (16A, 1-pole, Type C)
+├─── Branch Breaker CB-AUX1 (6A, 3-pole, Type C)
 │    │
 │    └─── SMPS #1 (Primary 24V Supply)
-│         Input: 230V AC (L1-N)
+│         Input: 400V AC (3-phase, 340-550V range)
 │         Output: 24V DC, 10A (240W)
 │         │
 │         ├─── 24V DC Main Bus ──► To PDU 3, PDU 4
@@ -145,9 +146,10 @@ Backplane Tap 2 (L1, N, PE)  ── Single phase tap
 │         └─── DC-DC Converter: 24V → 5V, 3A (15W)
 │              └─── 5V Rail ──► USB devices, logic ICs
 │
-├─── Branch Breaker CB-AUX2 (16A, 1-pole, Type C)
+├─── Branch Breaker CB-AUX2 (6A, 3-pole, Type C)
 │    │
 │    └─── SMPS #2 (Redundant 24V Supply)
+│         Input: 400V AC (3-phase, 340-550V range)
 │         Output: 24V DC, 10A (240W)
 │         │
 │         └─── 24V DC Backup Bus (diode-OR'd with SMPS #1)
@@ -198,17 +200,34 @@ Backplane Tap 2 (L1, N, PE)  ── Single phase tap
 │
 └─── HVAC Clip-On Interface
      │
-     ├─── Power: 24V DC feed (fused, 6A)
+     ├─── 24V DC feed (fused, 6A) — controller backup, fans, CAN power
      ├─── CAN Bus: CANH + CANL (to HVAC controller)
      └─── Quick-disconnect connector at clip-on interface
+
+Backplane AC Tap (L1–L2, dedicated HVAC feed)
+│
+└─── CB-HVAC (MCB, 2-pole)
+     │   10A for 9 kW HVAC unit (150 kW charger)
+     │   16A for 20 kW HVAC unit (350 kW charger)
+     │
+     └─── HVAC Clip-On Interface (AC terminals on multipole connector)
+          │
+          └─── 400V AC single-phase (L1–L2, line-to-line)
+               Loads: Compressor inverter drive, PTC heater (cold climate)
+               Max current: 7A (9 kW unit) / 15A (20 kW unit)
 ```
+
+> [!note] HVAC Dual Feed
+> HVAC units ≤3 kW (Configuration A) run entirely from the 24V DC feed. Units 5–20 kW (Configuration B) require the dedicated 400V AC L-L feed for the compressor inverter. Both feeds are routed through the single multipole clip-on connector. See [[docs/HVAC/01 - HVAC Unit Specification|01 - HVAC Unit Specification]] §2.1 for full details.
 
 | Parameter | Value |
 |-----------|-------|
-| Total PDU 3 Load | ~300W max (24V, 12.5A) |
+| Total PDU 3 Load (24V DC) | ~300W max (24V, 12.5A) |
 | Pump Current | 5A max |
 | Fan Current | 2A each (4A total) |
-| HVAC Interface | 24V + CAN, 6A fused |
+| HVAC 24V DC feed | 6A fused (controller backup, fans, CAN) |
+| HVAC AC feed (direct tap) | 400V AC L-L, MCB 10A (9 kW) / 16A (20 kW) |
+| HVAC AC max current | 7A (9 kW unit) / 15A (20 kW unit) |
 
 ### 4.4 PDU 4 — Communications & HMI
 
@@ -305,7 +324,7 @@ STEP 5: PDU 3 Cooling System Primed
     ▼
 STEP 6: PDU 1 Power Modules Enabled (On Demand)
     │
-    ├─── Main ECU commands K-PM1 / K-PM2 contactors closed
+    ├─── Main ECU commands K-PM1 through K-PM5 contactors closed
     ├─── Pre-charge sequence for DC link capacitors
     ├─── Power modules enter standby
     ├─── System state: READY (awaiting vehicle plug-in)
@@ -320,7 +339,7 @@ SYSTEM OPERATIONAL — Ready to accept charging session
 |------|--------|-----------|
 | 1 | Ramp down charging current to zero | Charging session ends or E-Stop |
 | 2 | Open DC output contactors K2, K3 | Current < 5A verified |
-| 3 | Open power module contactors K-PM1/2 | DC link discharged |
+| 3 | Open power module contactors K-PM1..5 | DC link discharged |
 | 4 | Cooling system runs at idle (post-cool) | 2-5 min thermal soak |
 | 5 | PDU 3 cooling system off | Module temps < 45°C |
 | 6 | PDU 1 fully de-energized | Contactors open confirmed |
@@ -333,7 +352,7 @@ SYSTEM OPERATIONAL — Ready to accept charging session
 FAULT or E-STOP DETECTED
     │
     ├─── Safety relay K10 de-energizes (< 50 ms)
-    │    ├─── All power module contactors open immediately
+    │    ├─── All power module contactors (K-PM1..K-PM5) open immediately
     │    ├─── DC output contactors open
     │    └─── AC main contactor K1 opens
     │
@@ -357,7 +376,7 @@ FAULT or E-STOP DETECTED
 | Busbar L1 voltage | Voltage divider | 0-690V AC | Main ECU AI |
 | Busbar L2 voltage | Voltage divider | 0-690V AC | Main ECU AI |
 | Busbar L3 voltage | Voltage divider | 0-690V AC | Main ECU AI |
-| PDU 1 current (per phase) | CT (200A/5A) | 0-250A | Main ECU AI |
+| PDU 1 current (per module, per phase) | CT (60A/5A) | 0-60A | Main ECU AI |
 | 24V DC bus voltage | Direct sense | 0-30V DC | Main ECU AI |
 | 24V DC bus current | Shunt (100mV/10A) | 0-15A | Main ECU AI |
 | UPS battery voltage | Direct sense | 20-29V DC | Main ECU AI |
@@ -393,27 +412,26 @@ All backplane monitoring data is:
 │                                                                   │
 │  ┌─────────────────────────────────────────────────────────────┐  │
 │  │                    BUSBAR ASSEMBLY                          │  │  ▲
-│  │   L1 ═══╤═══════╤═══════╤═══════╤═══                        │  │  │
-│  │   L2 ═══╤═══════╤═══════╤═══════╤═══                        │  │  80mm
-│  │   L3 ═══╤═══════╤═══════╤═══════╤═══                        │  │  │
-│  │   N  ═══╤═══════╤═══════╤═══════╤═══                        │  │  │
-│  │   PE ═══╤═══════╤═══════╤═══════╤═══                        │  │  ▼
-│  └─────────┼───────┼───────┼───────┼───────────────────────────┘  │
-│            │       │       │       │                              │
-│  ┌─────────▼──┐ ┌──▼──────┐ ┌─────▼────┐ ┌──────▼────┐            │
-│  │   PDU 1    │ │  PDU 2  │ │  PDU 3   │ │   PDU 4   │            │  ▲
-│  │  POWER     │ │   AUX   │ │ COOLING  │ │  COMMS    │            │  │
-│  │  MODULES   │ │ CONTROL │ │  SYSTEM  │ │  & HMI    │            │  │
-│  │            │ │         │ │          │ │           │            │  │
-│  │ CB-PM1     │ │ SMPS #1 │ │ F-PUMP   │ │ F-ECU     │            │  │
-│  │ K-PM1      │ │ SMPS #2 │ │ F-FAN1   │ │ F-DISP    │            │  300mm
-│  │ CB-PM2     │ │ UPS     │ │ F-FAN2   │ │ F-RFID    │            │  │
-│  │ K-PM2      │ │ DC-DC   │ │ F-HVAC   │ │ F-ISO     │            │  │
-│  │ CTs        │ │ DC-DC   │ │          │ │ F-4G      │            │  │
-│  │            │ │         │ │          │ │ F-ETH     │            │  │
-│  └────────────┘ └─────────┘ └──────────┘ └───────────┘            │  ▼
+│  │   L1 ═══╤═══════╤═══════╤═══════╤═══════╤══                 │  │  │
+│  │   L2 ═══╤═══════╤═══════╤═══════╤═══════╤══                 │  │  80mm
+│  │   L3 ═══╤═══════╤═══════╤═══════╤═══════│══                 │  │  │
+│  │   PE ═══╤═══════╤═══════╤═══════╤═══════╤══                 │  │  ▼
+│  └─────────┼───────┼───────┼───────┼───────┼─────────────────┘  │
+│            │       │       │       │       │                     │
+│  ┌─────────▼──┐ ┌──▼──────┐ ┌─────▼────┐ ┌──▼───────┐ ┌──▼────┐  │
+│  │   PDU 1    │ │  PDU 2  │ │  PDU 3   │ │  PDU 4   │ │CB-HVAC│  │  ▲
+│  │  POWER     │ │   AUX   │ │ COOLING  │ │  COMMS   │ │2-pole │  │  │
+│  │  MODULES   │ │ CONTROL │ │  SYSTEM  │ │  & HMI   │ │10/16A │  │  │
+│  │            │ │         │ │          │ │          │ │MCB    │  │  │
+│  │ CB-PM1..5  │ │ SMPS #1 │ │ F-PUMP   │ │ F-ECU    │ │L1+L2  │  │  │
+│  │ K-PM1..5   │ │ SMPS #2 │ │ F-FAN1   │ │ F-DISP   │ │→ HVAC │  │  300mm
+│  │ 5× 50A MCB │ │ UPS     │ │ F-FAN2   │ │ F-RFID   │ │clip-on│  │  │
+│  │ 5× 60A K   │ │ DC-DC   │ │ F-HVAC   │ │ F-ISO    │ │       │  │  │
+│  │ 15× CTs    │ │ DC-DC   │ │ (24V DC) │ │ F-4G     │ │       │  │  │
+│  │            │ │         │ │          │ │ F-ETH    │ │       │  │  │
+│  └────────────┘ └─────────┘ └──────────┘ └──────────┘ └───────┘  │  ▼
 │                                                                   │
-│  DIN Rail mounting for all PDUs                                   │
+│  DIN Rail mounting for all PDUs + CB-HVAC                        │
 │                                                                   │
 └───────────────────────────────────────────────────────────────────┘
 ```
@@ -431,27 +449,42 @@ All backplane monitoring data is:
 
 ### 8.1 High-Power Connections (Backplane → PDU 1)
 
+Each of the 5 module branches uses identical wiring (×5 sets):
+
 | Connection | Wire | Size | Color | Length |
 |------------|------|------|-------|--------|
-| L1 tap → CB-PM1 | XLPE | 95 mm² | Brown | <500mm |
-| L2 tap → CB-PM1 | XLPE | 95 mm² | Black | <500mm |
-| L3 tap → CB-PM1 | XLPE | 95 mm² | Gray | <500mm |
-| PE tap → PDU 1 bar | PVC | 35 mm² | Green/Yellow | <500mm |
-| L1 tap → CB-PM2 | XLPE | 95 mm² | Brown | <500mm |
-| L2 tap → CB-PM2 | XLPE | 95 mm² | Black | <500mm |
-| L3 tap → CB-PM2 | XLPE | 95 mm² | Gray | <500mm |
+| L1 tap → CB-PMx | PVC | 10 mm² | Brown | <500mm |
+| L2 tap → CB-PMx | PVC | 10 mm² | Black | <500mm |
+| L3 tap → CB-PMx | PVC | 10 mm² | Gray | <500mm |
+| PE tap → PDU 1 bar | PVC | 10 mm² | Green/Yellow | <500mm |
+
+10 mm² copper is rated ~57A in free air per IEC 60364, providing adequate margin for the 50A MCB and ~44A nominal module load.
 
 ### 8.2 Auxiliary Connections (Backplane → PDU 2)
 
 | Connection | Wire | Size | Color | Length |
 |------------|------|------|-------|--------|
 | L1 tap → CB-AUX1 | PVC | 4 mm² | Brown | <400mm |
-| N tap → CB-AUX1 | PVC | 4 mm² | Blue | <400mm |
+| L2 tap → CB-AUX1 | PVC | 4 mm² | Black | <400mm |
+| L3 tap → CB-AUX1 | PVC | 4 mm² | Gray | <400mm |
 | L1 tap → CB-AUX2 | PVC | 4 mm² | Brown | <400mm |
-| N tap → CB-AUX2 | PVC | 4 mm² | Blue | <400mm |
+| L2 tap → CB-AUX2 | PVC | 4 mm² | Black | <400mm |
+| L3 tap → CB-AUX2 | PVC | 4 mm² | Gray | <400mm |
 | PE tap → PDU 2 bar | PVC | 4 mm² | Green/Yellow | <400mm |
 
-### 8.3 24V DC Distribution (PDU 2 → PDU 3, PDU 4)
+### 8.3 HVAC AC Feed (Backplane TAP 5 → Clip-On Connector)
+
+| Connection | Wire | Size | Color | Length |
+|------------|------|------|-------|--------|
+| L1 tap → CB-HVAC | PVC | 2.5 mm² | Brown | <600mm |
+| L2 tap → CB-HVAC | PVC | 2.5 mm² | Black | <600mm |
+| CB-HVAC → clip-on connector (L) | H07RN-F | 2.5 mm² | Brown | <1000mm |
+| CB-HVAC → clip-on connector (N/L2) | H07RN-F | 2.5 mm² | Black | <1000mm |
+| PE tap → clip-on connector (PE) | PVC | 2.5 mm² | Green/Yellow | <1000mm |
+
+2.5 mm² copper is rated ~24A in conduit per IEC 60364, adequate for the 10A (9 kW) or 16A (20 kW) CB-HVAC breaker. The run from CB-HVAC to the clip-on connector is longer than other PDU runs as it routes to the cabinet side/rear wall.
+
+### 8.4 24V DC Distribution (PDU 2 → PDU 3, PDU 4)
 
 | Connection | Wire | Size | Color |
 |------------|------|------|-------|
@@ -469,20 +502,20 @@ All backplane monitoring data is:
 | Item | Qty | Specification |
 |------|-----|---------------|
 | Copper busbar (L1, L2, L3) | 3 | 30×5mm, 700mm length, tin-plated |
-| Copper busbar (N) | 1 | 20×5mm, 700mm length, tin-plated |
 | Copper busbar (PE) | 1 | 30×5mm, 700mm length, tin-plated |
-| Insulated standoffs | 20 | M8, 10kV rated, polyester |
-| Phase barrier plates | 4 | Polycarbonate, 700×30mm |
-| Busbar covers | 5 | IP2X finger-safe, polycarbonate |
-| Tap connectors (bolted) | 16 | M8 brass bolts, Belleville washers |
+| Insulated standoffs | 16 | M8, 10kV rated, polyester |
+| Phase barrier plates | 3 | Polycarbonate, 700×30mm |
+| Busbar covers | 4 | IP2X finger-safe, polycarbonate |
+| Tap connectors (bolted) | 18 | M8 brass bolts, Belleville washers (16 for PDU 1–4 + 2 for HVAC AC tap L1, L2) |
 
 ### 9.2 PDU Components
 
 | Item | Qty | Specification |
 |------|-----|---------------|
-| 3-pole MCB 175A Type C | 2 | PDU 1 branch breakers |
-| 3-pole AC contactor 200A | 2 | PDU 1 power module feeds |
-| 1-pole MCB 16A Type C | 2 | PDU 2 SMPS feeds |
+| 3-pole MCB 50A Type C | 5 | PDU 1 per-module branch breakers |
+| 3-pole AC contactor 60A | 5 | PDU 1 per-module feed contactors |
+| 3-pole MCB 6A Type C | 2 | PDU 2 SMPS feeds |
+| 2-pole MCB 10A/16A Type C | 1 | CB-HVAC — dedicated HVAC AC feed (L1–L2) |
 | SMPS 24V/10A | 2 | PDU 2 primary + redundant |
 | DC-DC 24V→12V/5A | 1 | PDU 2 |
 | DC-DC 24V→5V/3A | 1 | PDU 2 |
@@ -490,7 +523,7 @@ All backplane monitoring data is:
 | Diode-OR module | 1 | PDU 2 redundancy |
 | Automotive blade fuses (assorted) | 12 | PDU 3 and PDU 4 |
 | Fuse holders | 12 | DIN rail mount |
-| CTs 200A/5A | 6 | PDU 1 (3 per branch) |
+| CTs 60A/5A | 15 | PDU 1 (3 per module × 5 modules) |
 | DIN rail (35mm) | 4m | PDU mounting |
 | Terminal blocks (assorted) | 40 | DIN rail mount |
 
@@ -500,7 +533,7 @@ All backplane monitoring data is:
 
 - **Dual SMPS** with diode-OR output ensures no single PSU failure takes down the control system
 - **UPS battery** provides ride-through for grid disturbances and graceful shutdown on extended outage
-- **Independent branch protection** per power module allows one module to fault without affecting the other
+- **Independent per-module branch protection** (50A MCB + 60A contactor per module) ensures a single module fault is isolated without affecting the remaining four modules
 
 ### 10.2 Thermal Derating
 
@@ -518,9 +551,12 @@ The backplane busbar system should be derated for ambient temperatures above 40�
 The branch breakers in each PDU must trip before the main AC breaker to ensure faults are isolated to the affected subsystem without de-energizing the entire panel:
 
 ```
-Main AC Breaker (350A) ─► PDU 1 Branch (175A) ─► Power Module Fuse
+Main AC Breaker (350A) ─► Per-Module MCB (50A) ─► Module internal fuse (63A gG)
                         ─► PDU 2 Branch (16A)  ─► SMPS internal fuse
+                        ─► CB-HVAC (10A/16A)   ─► HVAC internal fuse (16A/32A gG)
 ```
+
+The 7:1 ratio between the main breaker (350A) and per-module MCBs (50A) provides excellent selectivity. A fault on any single module branch trips only that module's 50A MCB without disturbing other modules or the main breaker.
 
 Time-current curves must be coordinated during design to guarantee selectivity across all fault levels up to the prospective short-circuit current at the panel.
 
@@ -531,9 +567,10 @@ Time-current curves must be coordinated during design to guarantee selectivity a
 - [[01 - Hardware Components]] — Component specifications
 - [[02 - Electric Wiring Diagram]] — Full electrical schematic
 - [[03 - Cabinet Layout]] — Physical placement and thermal zones
+- [[docs/HVAC/01 - HVAC Unit Specification|01 - HVAC Unit Specification]] — HVAC electrical and mechanical specification
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-02-26
+**Document Version**: 1.1
+**Last Updated**: 2026-02-27
 **Prepared by**: Electrical Engineering

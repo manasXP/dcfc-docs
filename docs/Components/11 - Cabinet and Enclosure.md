@@ -22,14 +22,14 @@ The cabinet is the outdoor-rated enclosure that houses all charger subsystems. I
 | Anti-vibration pads | 4 | M12 base mounts | $20 |
 | Cable trays (control + power) | 2 | Left and right side, with covers | $80 |
 | Earth bonding straps | 4 | Between door, chassis, DIN rail, and PE bar | $15 |
-| Power cable (AC input, 120 mm²) | 5 m | L1, L2, L3, N, PE — service entrance | $150 |
+| Power cable (AC input, 120 mm²) | 5 m | L1, L2, L3, PE — service entrance (3-wire, no neutral) | $120 |
 | Cable ties, clips, labels | 1 set | Assorted | $30 |
 
 ## 3. Subtotal
 
 | Category | Total |
 |----------|-------|
-| **Cabinet and Enclosure** | **$2,145** |
+| **Cabinet and Enclosure** | **$2,115** |
 
 ## 4. Notes
 

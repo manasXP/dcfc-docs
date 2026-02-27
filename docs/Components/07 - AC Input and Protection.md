@@ -16,7 +16,7 @@ The AC input and protection stage provides the interface between the utility gri
 |------|-----|---------------|------------|
 | Main disconnect switch (350A, 3-pole) | 1 | Lockable, door-interlocked | $120 |
 | AC contactor K1 (400A, 3-pole) | 1 | 24V DC coil, via safety relay chain | $250 |
-| Surge protection device (SPD Type 2) | 1 | 3-phase + N, 40 kA | $80 |
+| Surge protection device (SPD Type 2) | 1 | 3-phase, 40 kA (3-pole, no N) | $70 |
 | Energy meter (MID certified) | 1 | Class 0.5, Modbus RTU/TCP | $150 |
 | EMI filter | 1 | 3-phase, matched to system rating | $80 |
 
@@ -25,21 +25,20 @@ The AC input and protection stage provides the interface between the utility gri
 | Item | Qty | Specification | Est. Price |
 |------|-----|---------------|------------|
 | Copper busbar L1, L2, L3 (30×5 mm, 700 mm) | 3 | Tin-plated C110 copper, 400A rated | $90 |
-| Copper busbar N (20×5 mm, 700 mm) | 1 | Tin-plated | $25 |
 | Copper busbar PE (30×5 mm, 700 mm) | 1 | Bonded to chassis | $30 |
-| Insulated standoffs (M8, 10 kV) | 20 | Polyester | $40 |
-| Phase barrier plates | 4 | Polycarbonate, 700×30 mm | $20 |
-| Busbar covers (IP2X finger-safe) | 5 | Polycarbonate | $30 |
+| Insulated standoffs (M8, 10 kV) | 16 | Polyester | $32 |
+| Phase barrier plates | 3 | Polycarbonate, 700×30 mm | $15 |
+| Busbar covers (IP2X finger-safe) | 4 | Polycarbonate | $24 |
 | Tap connectors (bolted) | 16 | M8 brass bolts, Belleville washers | $25 |
 
 ### 2.3 PDU Branch Protection
 
 | Item | Qty | Specification | Est. Price |
 |------|-----|---------------|------------|
-| 3-pole MCB 175A Type C (PDU 1) | 2 | Power module branch breakers | $120 |
-| 3-pole AC contactor 200A (PDU 1) | 2 | Power module feed contactors | $200 |
-| 1-pole MCB 16A Type C (PDU 2) | 2 | SMPS branch breakers | $20 |
-| Current transformers 200A/5A | 6 | 3 per power module branch | $60 |
+| 3-pole MCB 50A Type C (PDU 1) | 5 | Per-module branch breakers | $150 |
+| 3-pole AC contactor 60A (PDU 1) | 5 | Per-module feed contactors | $350 |
+| 3-pole MCB 6A Type C (PDU 2) | 2 | SMPS branch breakers (3-phase input) | $30 |
+| Current transformers 60A/5A | 15 | 3 per module × 5 modules | $150 |
 | Automotive blade fuses (assorted) | 12 | PDU 3 and PDU 4 | $15 |
 | DIN-rail fuse holders | 12 | DIN rail mount | $30 |
 | DIN rail (35 mm) | 4 m | PDU mounting | $15 |
@@ -59,7 +58,7 @@ The AC input and protection stage provides the interface between the utility gri
 
 | Category | Total |
 |----------|-------|
-| **AC Input and Protection** | **$1,496** |
+| **AC Input and Protection** | **$1,717** |
 
 ## 4. Notes
 
