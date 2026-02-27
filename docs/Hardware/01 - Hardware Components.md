@@ -108,7 +108,35 @@ This document provides detailed specifications and requirements for the key hard
 - Coolant pressure: 1-3 bar
 - Heat dissipation: 5-10% of charging power (2.5-35 kW)
 
-### 4.2 Air Cooling (Lower Power Systems)
+### 4.2 HVAC Clip-On Unit (Cabinet Air Cooling)
+
+**Application**: Sealed cabinet thermal management (IP55+)
+
+The HVAC clip-on unit is a self-contained, externally mounted refrigeration system that creates a closed-loop internal air circuit. Hot cabinet air passes over an evaporator coil and returns cooled — external ambient air never contacts the electronics. The unit is a field-replaceable unit (FRU) with a 30-minute swap target.
+
+**Key Specifications**:
+
+| Parameter | 150 kW Variant | 350 kW Variant |
+|-----------|----------------|----------------|
+| Cooling capacity | 9 kW thermal | 20 kW thermal |
+| Electrical input | ~3 kW (400V AC L-L) | ~7 kW (400V AC L-L) |
+| COP | ~3.0 at 35°C ambient | ~2.8 at 35°C ambient |
+| Refrigerant | R-32 | R-32 |
+| Compressor | Rotary/scroll, inverter-driven | Scroll, inverter-driven |
+| Operating ambient | -30°C to +50°C | -30°C to +50°C |
+| IP rating | IP55 | IP55 |
+| Dimensions (H×W×D) | 600×400×300 mm | 800×500×400 mm |
+| Weight | 25–35 kg | 45–65 kg |
+
+**Power Supply**: 400V AC single-phase (L1–L2 from backplane TAP 5 via CB-HVAC) + 24V DC backup from PDU 3. See [[docs/HVAC/01 - HVAC Unit Specification|01 - HVAC Unit Specification]] for full electrical, mechanical, and thermal specs.
+
+**Control Interface**: CAN 2.0B at 250 kbps on CAN #3 (dedicated), M12 4-pin connector. See [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]] for the message dictionary.
+
+**Detailed Design**: [[docs/Hardware/06 - HVAC Clip-On Unit Hardware Design|06 - HVAC Clip-On Unit Hardware Design]]
+
+**Component BOM**: [[docs/Components/10 - HVAC Clip-On Unit|10 - HVAC Clip-On Unit]] (~$1,720 per unit)
+
+### 4.3 Air Cooling (Lower Power Systems)
 
 **Application**: <50 kW chargers
 
@@ -383,6 +411,8 @@ This document provides detailed specifications and requirements for the key hard
 - Coolant (annually)
 - Connector wear inspection (quarterly)
 - Cable inspection (monthly)
+- HVAC condenser coil cleaning (quarterly)
+- HVAC foam gaskets (3 years)
 
 **Predictive Maintenance**:
 - Capacitor health monitoring
@@ -398,6 +428,7 @@ This document provides detailed specifications and requirements for the key hard
 - Display/touchscreen
 - Communication module
 - Coolant pump
+- HVAC clip-on unit (complete FRU swap)
 
 ## 13. References
 
@@ -408,7 +439,9 @@ This document provides detailed specifications and requirements for the key hard
 
 ## 14. Related Documentation
 
-- Power conversion design
-- Thermal management calculations
-- Safety circuit diagrams
-- Component datasheets
+- [[docs/HVAC/01 - HVAC Unit Specification|01 - HVAC Unit Specification]] — HVAC electrical, mechanical, and thermal specs
+- [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]] — HVAC CAN message dictionary
+- [[docs/Hardware/06 - HVAC Clip-On Unit Hardware Design|06 - HVAC Clip-On Unit Hardware Design]] — Detailed HVAC hardware design
+- [[docs/Hardware/04 - Backplane Power Management|04 - Backplane Power Management]] — Power distribution and HVAC AC feed
+- [[docs/Hardware/02 - Electric Wiring Diagram|02 - Electric Wiring Diagram]] — Full wiring diagram including HVAC
+- [[docs/Components/10 - HVAC Clip-On Unit|10 - HVAC Clip-On Unit]] — HVAC component BOM
