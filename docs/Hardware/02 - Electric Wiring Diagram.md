@@ -258,7 +258,7 @@ Specification: CAN-bus cable, 120Ω characteristic impedance
 ### 6.1 Liquid Cooling Control
 
 ```
-24V DC Supply
+24V DC Supply (from PDU 3)
 │
 ├─── Coolant Pump
 │    │
@@ -296,6 +296,61 @@ Specification: CAN-bus cable, 120Ω characteristic impedance
           Connection: To controller AI4
           Location: Near connector (liquid-cooled cable)
 ```
+
+### 6.2 HVAC Clip-On Unit Power Feed
+
+The HVAC unit receives two independent power feeds routed to a single multipole clip-on connector on the cabinet wall. See [[docs/Hardware/04 - Backplane Power Management|04 - Backplane Power Management]] §4.3 and [[docs/HVAC/01 - HVAC Unit Specification|01 - HVAC Unit Specification]] §2 for full details.
+
+```
+Backplane AC Tap 5 (L1, L2 only — 400V line-to-line)
+│
+└─── CB-HVAC (MCB, 2-pole, 10A / 16A, Type C)
+     │
+     ├─── L1 ── 2.5 mm² Brown ─┐
+     ├─── L2 ── 2.5 mm² Black ─┤
+     │                          │
+     │    (routed to cabinet wall via H07RN-F 2.5 mm²)
+     │                          │
+     │                    ┌─────▼──────────────────────┐
+     │                    │  HVAC CLIP-ON CONNECTOR     │
+     │                    │  (Multipole, e.g. Harting)  │
+     │                    │                             │
+     │                    │  Pin 1: L1 (400V AC)        │
+     │                    │  Pin 2: L2 (400V AC)        │
+     │                    │  Pin 3: PE                  │
+     │                    │  Pin 4: 24V DC+             │
+     │                    │  Pin 5: 24V 0V              │
+     │                    └─────────────────────────────┘
+     │                              ▲         ▲
+     │                              │         │
+     PE ── 2.5 mm² G/Y ────────────┘         │
+                                              │
+24V DC Supply (from PDU 3, fused 6A) ────────┘
+     │
+     ├─── 24V DC+ ── 1.5 mm² Red
+     └─── 0V DC  ── 1.5 mm² Black
+
+Separate: M12 4-pin CAN connector (CAN #3)
+     ├─── CAN_H ── 0.75 mm² shielded twisted pair
+     ├─── CAN_L
+     ├─── GND
+     └─── Shield
+```
+
+**HVAC Internal Loads (within HVAC unit, downstream of clip-on connector)**:
+
+| Load | Power Source | Max Current |
+|------|-------------|-------------|
+| Compressor inverter drive | 400V AC (L1–L2) | 7A (9 kW) / 15A (20 kW) |
+| PTC heater (cold climate) | 400V AC (L1–L2) | 2.5A |
+| Internal buck converter (400V AC → 24V DC) | 400V AC (L1–L2) | 0.5A |
+| HVAC controller MCU | 24V DC (PDU 3 backup) | 0.2A |
+| Internal blower fan | 24V DC | 6A max |
+| External condenser fan | 24V DC | 4A max |
+| EEV stepper motor | 24V DC (via controller) | 0.5A |
+
+> [!note] Configuration A (≤3 kW units)
+> Small HVAC units run entirely from the 24V DC feed. The AC pins on the clip-on connector are unused and capped. CB-HVAC is left in the OFF position or replaced with a blanking module on the DIN rail.
 
 ## 7. Metering and Measurement Circuit
 
@@ -609,6 +664,31 @@ Terminal | Connection              | Wire Size
 6-8      | Spare                  | -
 ```
 
+### 12.5 HVAC Clip-On Connector (Multipole + M12)
+
+**Power Connector** (e.g. Harting Han, mounted on cabinet wall):
+```
+Pin | Connection              | Wire Size  | Source
+----|------------------------|------------|------------------
+1   | L1 (400V AC)           | 2.5 mm²   | CB-HVAC (TAP 5)
+2   | L2 (400V AC)           | 2.5 mm²   | CB-HVAC (TAP 5)
+3   | PE                     | 2.5 mm²   | PE busbar
+4   | 24V DC+                | 1.5 mm²   | PDU 3 (fused 6A)
+5   | 24V 0V                 | 1.5 mm²   | PDU 3
+```
+
+**CAN Connector** (M12 4-pin, A-coded, panel-mount socket):
+```
+Pin | Connection              | Wire Size  | Source
+----|------------------------|------------|------------------
+1   | CAN_H                  | 0.75 mm²  | Phytec SBC CAN #3
+2   | CAN_L                  | 0.75 mm²  | Phytec SBC CAN #3
+3   | GND                    | 0.75 mm²  | Signal ground
+4   | Shield                 | Drain wire | CAN cable shield
+```
+
+**Condensate Drain** (bulkhead barb fitting, 10 mm ID, silicone hose to exterior).
+
 ## 13. Cable Specifications Summary
 
 ### 13.1 Power Cables
@@ -618,6 +698,7 @@ Terminal | Connection              | Wire Size
 | AC Input (3-phase) | XLPE | 120 mm² | 0.6/1 kV | 90°C |
 | DC Output | EPR or XLPE | 95 mm² | 1.5 kV DC | 90°C |
 | DC Output (liquid-cooled) | Special flex | 70-95 mm² | 1.5 kV DC | 105°C |
+| HVAC AC feed (L1–L2) | H07RN-F flexible rubber | 2.5 mm² | 450/750 V | 60°C |
 | Protective Earth | PVC | 95 mm² | 450/750 V | 70°C |
 
 ### 13.2 Control Cables
@@ -646,6 +727,7 @@ Terminal | Connection              | Wire Size
 | Main Disconnect | Load break switch | 400A | - | - |
 | AC Circuit Breaker | MCB/MCCB | 350A | 50 kA | Type C |
 | DC Circuit Breaker | DC-rated MCB | 500A | 10 kA (DC) | - |
+| CB-HVAC | MCB, 2-pole | 10A (9 kW) / 16A (20 kW) | 10 kA | Type C |
 | Auxiliary Supply Fuse | Glass fuse | 10A | 10 kA | Fast |
 
 ### 14.2 Contactor Specifications
@@ -736,7 +818,9 @@ Terminal | Connection              | Wire Size
 
 - [[01 - Hardware Components]] - Component specifications
 - [[03 - Standards Compliance]] - IEC 61851, ISO 15118 wiring requirements
-- [[__Workspaces/ECG/__init]] - System overview and architecture
+- [[docs/Hardware/04 - Backplane Power Management|04 - Backplane Power Management]] - PDU distribution and HVAC AC tap
+- [[docs/HVAC/01 - HVAC Unit Specification|01 - HVAC Unit Specification]] - HVAC electrical specification
+- [[docs/HVAC/04 - HVAC CANBus Interface Specification|04 - HVAC CANBus Interface Specification]] - CAN #3 message dictionary
 
 ## 19. Schematic Drawing References
 
@@ -744,12 +828,13 @@ Terminal | Connection              | Wire Size
 2. **Control Circuit (Sheet 2)**: 24V DC control, safety interlocks
 3. **Communication Circuit (Sheet 3)**: ISO 15118, CAN, Ethernet
 4. **Cooling System (Sheet 4)**: Pump, fans, temperature sensors
-5. **User Interface (Sheet 5)**: Display, RFID, LEDs
-6. **Terminal Layout (Sheet 6)**: Terminal blocks and cable connections
+5. **HVAC Power Feed (Sheet 5)**: CB-HVAC, clip-on connector, CAN #3
+6. **User Interface (Sheet 6)**: Display, RFID, LEDs
+7. **Terminal Layout (Sheet 7)**: Terminal blocks and cable connections
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-01-08
+**Document Version**: 1.1
+**Last Updated**: 2026-02-27
 **Prepared by**: Technical Documentation
 **Approved by**: Chief Electrical Engineer
